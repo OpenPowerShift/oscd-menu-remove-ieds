@@ -1,9 +1,12 @@
 import { expect, fixture, html } from '@open-wc/testing';
 import { LitElement } from 'lit';
 
-import OscdRemoveIEDs from './oscd-remove-ieds.js';
+import { XMLEditor } from '@openscd/oscd-editor';
+
+import type { EditDetailV2 } from '@openscd/oscd-api';
 import type { OscdSelectionList } from '@omicronenergy/oscd-ui/selection-list/OscdSelectionList.js';
 import { testDocs, parseDoc } from './oscd-remove-ieds.testfiles.js';
+import OscdRemoveIEDs from './oscd-remove-ieds.js';
 
 customElements.define('oscd-remove-ieds', OscdRemoveIEDs);
 
@@ -14,31 +17,65 @@ function getIedNames(doc: XMLDocument): string[] {
 }
 
 describe('oscd-remove-ieds', () => {
-  let element: OscdRemoveIEDs & LitElement;
+  let oscdRemoveIedsPlugin: OscdRemoveIEDs & LitElement;
   let doc: XMLDocument;
+  let editCount = 0;
+
+  const editor = new XMLEditor();
+
+  const selectAndRemoveAllIEDs = async (sclDoc: XMLDocument) => {
+    const plugin: OscdRemoveIEDs & LitElement = await fixture(
+      html`<oscd-remove-ieds .doc=${sclDoc}></oscd-remove-ieds>`,
+    );
+    const sclEditor = new XMLEditor();
+
+    plugin.addEventListener('oscd-edit-v2', (event: Event) => {
+      const { edit, title, squash } = (event as CustomEvent<EditDetailV2>)
+        .detail;
+      sclEditor.commit(edit, { title, squash });
+    });
+    await plugin.updateComplete;
+
+    plugin.selectionList.items = plugin.selectionList.items.map(item => ({
+      ...item,
+      selected: true,
+    }));
+    await plugin.removeIEDs();
+  };
 
   describe('with multiple IEDs', () => {
     beforeEach(async () => {
       doc = parseDoc(testDocs.multipleIEDs);
-      element = await fixture(
-        html`<oscd-remove-ieds .doc=${doc}></oscd-remove-ieds>`,
+      oscdRemoveIedsPlugin = await fixture(
+        html`<oscd-remove-ieds
+          .doc=${doc}
+          .editCount=${editCount}
+        ></oscd-remove-ieds>`,
       );
-      await element.updateComplete;
+
+      oscdRemoveIedsPlugin.addEventListener('oscd-edit-v2', (e: Event) => {
+        const { edit, title, squash } = (e as CustomEvent<EditDetailV2>).detail;
+        editor.commit(edit, { title, squash });
+        editCount++;
+        oscdRemoveIedsPlugin.editCount = editCount;
+      });
+      await oscdRemoveIedsPlugin.updateComplete;
     });
 
     it('renders the dialog element', () => {
-      const dialog = element.shadowRoot!.querySelector('#selection-dialog');
+      const dialog =
+        oscdRemoveIedsPlugin.shadowRoot!.querySelector('#selection-dialog');
       expect(dialog).to.exist;
     });
 
     it('renders the selection list', () => {
       const selectionList =
-        element.shadowRoot!.querySelector('#selection-list');
+        oscdRemoveIedsPlugin.shadowRoot!.querySelector('#selection-list');
       expect(selectionList).to.exist;
     });
 
     it('lists all IEDs from the document', () => {
-      const selectionList = element.shadowRoot!.querySelector(
+      const selectionList = oscdRemoveIedsPlugin.shadowRoot!.querySelector(
         '#selection-list',
       ) as OscdSelectionList;
       expect(selectionList).to.exist;
@@ -50,7 +87,7 @@ describe('oscd-remove-ieds', () => {
     });
 
     it('includes IED description in list items', () => {
-      const selectionList = element.shadowRoot!.querySelector(
+      const selectionList = oscdRemoveIedsPlugin.shadowRoot!.querySelector(
         '#selection-list',
       ) as OscdSelectionList;
 
@@ -66,7 +103,7 @@ describe('oscd-remove-ieds', () => {
 
     it('renders Close and Remove IEDs buttons', () => {
       const buttons =
-        element.shadowRoot!.querySelectorAll('oscd-text-button');
+        oscdRemoveIedsPlugin.shadowRoot!.querySelectorAll('oscd-text-button');
       const buttonLabels = Array.from(buttons).map(
         btn => btn.textContent?.trim(),
       );
@@ -76,22 +113,21 @@ describe('oscd-remove-ieds', () => {
 
     it('dispatches oscd-edit-v2 events when removing IEDs', async () => {
       const editEvents: Event[] = [];
-      element.addEventListener('oscd-edit-v2', (e: Event) => {
+      oscdRemoveIedsPlugin.addEventListener('oscd-edit-v2', (e: Event) => {
         editEvents.push(e);
       });
 
-      const selectionList = element.shadowRoot!.querySelector(
+      const selectionList = oscdRemoveIedsPlugin.shadowRoot!.querySelector(
         '#selection-list',
       ) as OscdSelectionList;
       const iedToRemove = doc.querySelector('IED[name="PUB_A"]')!;
 
-      // Override selectedElements to simulate user selection
       Object.defineProperty(selectionList, 'selectedElements', {
         get: () => [iedToRemove],
         configurable: true,
       });
 
-      await element.removeIEDs();
+      await oscdRemoveIedsPlugin.removeIEDs();
 
       expect(editEvents.length).to.equal(1);
     });
@@ -100,14 +136,17 @@ describe('oscd-remove-ieds', () => {
   describe('with a single IED', () => {
     beforeEach(async () => {
       doc = parseDoc(testDocs.singleIED);
-      element = await fixture(
-        html`<oscd-remove-ieds .doc=${doc}></oscd-remove-ieds>`,
+      oscdRemoveIedsPlugin = await fixture(
+        html`<oscd-remove-ieds
+          .doc=${doc}
+          .editCount=${editCount}
+        ></oscd-remove-ieds>`,
       );
-      await element.updateComplete;
+      await oscdRemoveIedsPlugin.updateComplete;
     });
 
     it('lists the single IED', () => {
-      const selectionList = element.shadowRoot!.querySelector(
+      const selectionList = oscdRemoveIedsPlugin.shadowRoot!.querySelector(
         '#selection-list',
       ) as OscdSelectionList;
 
@@ -122,14 +161,17 @@ describe('oscd-remove-ieds', () => {
   describe('with no IEDs', () => {
     beforeEach(async () => {
       doc = parseDoc(testDocs.noIEDs);
-      element = await fixture(
-        html`<oscd-remove-ieds .doc=${doc}></oscd-remove-ieds>`,
+      oscdRemoveIedsPlugin = await fixture(
+        html`<oscd-remove-ieds
+          .doc=${doc}
+          .editCount=${editCount}
+        ></oscd-remove-ieds>`,
       );
-      await element.updateComplete;
+      await oscdRemoveIedsPlugin.updateComplete;
     });
 
     it('renders the dialog with an empty selection list', () => {
-      const selectionList = element.shadowRoot!.querySelector(
+      const selectionList = oscdRemoveIedsPlugin.shadowRoot!.querySelector(
         '#selection-list',
       ) as OscdSelectionList;
 
@@ -141,20 +183,67 @@ describe('oscd-remove-ieds', () => {
   describe('editCount reactivity', () => {
     it('updates when editCount changes', async () => {
       doc = parseDoc(testDocs.multipleIEDs);
-      element = await fixture(
-        html`<oscd-remove-ieds
-          .doc=${doc}
-          .editCount=${0}
-        ></oscd-remove-ieds>`,
+      oscdRemoveIedsPlugin = await fixture(
+        html`<oscd-remove-ieds .doc=${doc} .editCount=${0}></oscd-remove-ieds>`,
       );
-      await element.updateComplete;
+      await oscdRemoveIedsPlugin.updateComplete;
 
-      element.editCount = 1;
-      await element.updateComplete;
+      oscdRemoveIedsPlugin.editCount = 1;
+      await oscdRemoveIedsPlugin.updateComplete;
 
       const selectionList =
-        element.shadowRoot!.querySelector('#selection-list');
+        oscdRemoveIedsPlugin.shadowRoot!.querySelector('#selection-list');
       expect(selectionList).to.exist;
     });
+  });
+
+  describe('SCL validity: empty SubNetwork after removing all IEDs', () => {
+    let sclDoc: XMLDocument;
+
+    beforeEach(() => {
+      sclDoc = parseDoc(testDocs.emptySubNetwork);
+    });
+
+    it('has two IEDs and a SubNetwork with ConnectedAPs before removal', () => {
+      expect(sclDoc.querySelectorAll('IED').length).to.equal(2);
+      expect(sclDoc.querySelectorAll('ConnectedAP').length).to.equal(2);
+      expect(sclDoc.querySelectorAll('SubNetwork').length).to.equal(1);
+    });
+
+    it('removes all IEDs and their ConnectedAPs', async () => {
+      await selectAndRemoveAllIEDs(sclDoc);
+      expect(sclDoc.querySelectorAll('IED').length).to.equal(0);
+      expect(sclDoc.querySelectorAll('ConnectedAP').length).to.equal(0);
+    });
+
+  });
+
+  describe('SCL validity: duplicate LNodes after removing IEDs', () => {
+    let sclDoc: XMLDocument;
+
+    beforeEach(() => {
+      sclDoc = parseDoc(testDocs.duplicateLNodes);
+    });
+
+    it('has two IEDs with LNodes referencing them before removal', () => {
+      expect(sclDoc.querySelectorAll('IED').length).to.equal(2);
+      const lnodes = sclDoc.querySelectorAll('ConductingEquipment > LNode');
+      expect(lnodes.length).to.equal(6);
+
+      const ied1Refs = sclDoc.querySelectorAll('LNode[iedName="IED1"]');
+      const ied2Refs = sclDoc.querySelectorAll('LNode[iedName="IED2"]');
+      expect(ied1Refs.length).to.equal(3);
+      expect(ied2Refs.length).to.equal(3);
+    });
+
+    it('sets LNode iedName to None after removing IEDs', async () => {
+      await selectAndRemoveAllIEDs(sclDoc);
+
+      const lnodes = sclDoc.querySelectorAll('ConductingEquipment > LNode');
+      for (const ln of Array.from(lnodes)) {
+        expect(ln.getAttribute('iedName')).to.equal('None');
+      }
+    });
+
   });
 });
