@@ -39,25 +39,26 @@
     "test:watch": "oscd test --watch",
     "test:visual": "oscd test --visual",
     "test:update": "oscd test --update",
+    "updates": "oscd updates",
     "deploy": "oscd deploy",
     "prepare": "oscd install-hooks"
   },
   "dependencies": {
     "@omicronenergy/oscd-menu-open": "^0.0.6",
     "@omicronenergy/oscd-menu-save": "^0.0.2",
-    "@omicronenergy/oscd-shell": "^0.0.13",
-    "@omicronenergy/oscd-ui": "^0.0.12",
-    "@open-wc/scoped-elements": "^3.0.6",
+    "@omicronenergy/oscd-shell": "^0.0.18",
+    "@omicronenergy/oscd-ui": "^0.1.1",
+    "@open-wc/scoped-elements": "^3.0.10",
     "@openscd/oscd-api": "^0.1.6",
-    "@openscd/scl-lib": "^2.0.0",
+    "@openscd/scl-lib": "^2.0.1",
     "@webcomponents/scoped-custom-element-registry": "^0.0.10",
-    "lit": "^3.1.0"
+    "lit": "^3.3.3"
   },
   "devDependencies": {
     "@omicronenergy/oscd-tooling": "^0.0.7",
     "@open-wc/testing": "^4.0.0",
     "@openscd/oscd-editor": "^1.8.0",
     "@web/test-runner-playwright": "0.11.1",
-    "typedoc": "^0.28.19"
+    "typedoc": "^0.28.20"
   }
 }

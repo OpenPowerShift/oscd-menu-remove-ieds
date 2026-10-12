@@ -259,6 +259,10 @@ To run the tests in interactive watch mode run:
 
 === Tooling configs
 
+To interactively select dependency updates using the shared tooling's update policy:
+
+ $ npm run updates
+
 To generate TypeDoc documentation in `dist/doc` without CEM analysis:
 
  $ npm run doc
