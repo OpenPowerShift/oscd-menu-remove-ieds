@@ -13,13 +13,13 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: '24'
 
       - name: Install dependencies
         run: npm ci
 
       - name: Install playwright browsers
-        run: npx playwright install --with-deps
+        run: npm exec oscd install-playwright
 
       - name: Run tests
         run: npm run-script test

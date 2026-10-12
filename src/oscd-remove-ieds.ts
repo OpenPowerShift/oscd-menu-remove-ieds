@@ -113,7 +113,7 @@ export default class OscdRemoveIEDs extends ScopedElementsMixin(LitElement) {
           id="selection-list"
           multiselect
           .items=${Array.from(this.doc?.querySelectorAll('IED') ?? []).map(
-            ied => {
+            (ied) => {
               const { firstLine, secondLine } = getIedDescription(ied);
 
               return {

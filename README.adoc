@@ -195,7 +195,7 @@ In this case what is shown is loading a plugin from the internet using the conti
 
 This plugin uses Node.js and the npm package ecosystem and is verified to work on Linux.
 
-For development, you'll need Node.js (including npm, which is bundled with Node.js) on your system.
+For development, you'll need Node.js 24 (including npm, which is bundled with Node.js) on your system.
 
 To check whether you have Node.js installed, and which version, open a terminal and type:
 
@@ -205,9 +205,9 @@ A good way to install Node.js is to use {uri-nvm}[nvm] (Node Version Manager), h
 
 If you're using Linux or macOS, follow {uri-nvm-install}[the nvm installation instructions] to set up nvm on your machine.
 
-Once you've installed nvm, open a *new* terminal and install the active Node.js LTS release using:
+Once you've installed nvm, open a *new* terminal and install Node.js 24 using:
 
- $ nvm install --lts
+ $ nvm install 24
 
 Now that you have Node.js installed, you can install this plugin.
 
@@ -241,7 +241,13 @@ To automatically fix linting and formatting errors, run
 
  $ npm run format
 
+Formatting is now handled by the shared ESLint stylistic rules, rather than Prettier.
+
 === Testing with Web Test Runner
+
+Before the first test run, install the browsers using the shared tooling:
+
+ $ npm exec oscd install-playwright
 
 To execute a single test run:
 
@@ -253,8 +259,16 @@ To run the tests in interactive watch mode run:
 
 === Tooling configs
 
+To generate TypeDoc documentation in `dist/doc` without CEM analysis:
+
+ $ npm run doc
+
 Scripts and dependency declarations are in `package.json`.
-Tool configuration is in `tsconfig.json`, `eslint.config.js`, `rollup.config.js`,
-`web-dev-server.config.js` and `web-test-runner.config.js`.
+Build, bundle, lint, test and development-server commands use the `oscd` CLI from
+`@omicronenergy/oscd-tooling`.
+`tsconfig.json` and `eslint.config.js` extend its shared configs;
+`web-test-runner.config.js` retains Chromium, Firefox and WebKit coverage.
+`npm install` installs the shared hooks in `.githooks`.
+Custom Elements Manifest generation is no longer configured.
 
 © 2023 OpenSCD Daniel Mulholland
