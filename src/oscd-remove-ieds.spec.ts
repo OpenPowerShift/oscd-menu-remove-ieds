@@ -19,7 +19,7 @@ function getIedNames(doc: XMLDocument): string[] {
 describe('oscd-remove-ieds', () => {
   let oscdRemoveIedsPlugin: OscdRemoveIEDs & LitElement;
   let doc: XMLDocument;
-  let editCount = 0;
+  let docVersion = 0;
 
   const editor = new XMLEditor();
 
@@ -49,15 +49,15 @@ describe('oscd-remove-ieds', () => {
       oscdRemoveIedsPlugin = await fixture(
         html`<oscd-remove-ieds
           .doc=${doc}
-          .editCount=${editCount}
+          .docVersion=${docVersion}
         ></oscd-remove-ieds>`,
       );
 
       oscdRemoveIedsPlugin.addEventListener('oscd-edit-v2', (e: Event) => {
         const { edit, title, squash } = (e as CustomEvent<EditDetailV2>).detail;
         editor.commit(edit, { title, squash });
-        editCount++;
-        oscdRemoveIedsPlugin.editCount = editCount;
+        docVersion++;
+        oscdRemoveIedsPlugin.docVersion = docVersion;
       });
       await oscdRemoveIedsPlugin.updateComplete;
     });
@@ -139,7 +139,7 @@ describe('oscd-remove-ieds', () => {
       oscdRemoveIedsPlugin = await fixture(
         html`<oscd-remove-ieds
           .doc=${doc}
-          .editCount=${editCount}
+          .docVersion=${docVersion}
         ></oscd-remove-ieds>`,
       );
       await oscdRemoveIedsPlugin.updateComplete;
@@ -164,7 +164,7 @@ describe('oscd-remove-ieds', () => {
       oscdRemoveIedsPlugin = await fixture(
         html`<oscd-remove-ieds
           .doc=${doc}
-          .editCount=${editCount}
+          .docVersion=${docVersion}
         ></oscd-remove-ieds>`,
       );
       await oscdRemoveIedsPlugin.updateComplete;
@@ -180,20 +180,41 @@ describe('oscd-remove-ieds', () => {
     });
   });
 
-  describe('editCount reactivity', () => {
-    it('updates when editCount changes', async () => {
+  describe('docVersion reactivity', () => {
+    it('refreshes the IED list after an edit and undo on the same document', async () => {
       doc = parseDoc(testDocs.multipleIEDs);
       oscdRemoveIedsPlugin = await fixture(
-        html`<oscd-remove-ieds .doc=${doc} .editCount=${0}></oscd-remove-ieds>`,
+        html`<oscd-remove-ieds .doc=${doc} .docVersion=${0}></oscd-remove-ieds>`,
       );
       await oscdRemoveIedsPlugin.updateComplete;
 
-      oscdRemoveIedsPlugin.editCount = 1;
+      const selectionList = oscdRemoveIedsPlugin.selectionList;
+      const iedToRemove = doc.querySelector('IED[name="PUB_A"]')!;
+      const sclEditor = new XMLEditor();
+
+      expect(selectionList.items.map(item => item.attachedElement)).to.deep.equal(
+        Array.from(doc.querySelectorAll('IED')),
+      );
+
+      sclEditor.commit({ node: iedToRemove });
+      oscdRemoveIedsPlugin.docVersion = Symbol('edit');
       await oscdRemoveIedsPlugin.updateComplete;
 
-      const selectionList =
-        oscdRemoveIedsPlugin.shadowRoot!.querySelector('#selection-list');
-      expect(selectionList).to.exist;
+      expect(oscdRemoveIedsPlugin.doc).to.equal(doc);
+      expect(selectionList.items).to.have.lengthOf(1);
+      expect(selectionList.items[0].attachedElement).to.equal(
+        doc.querySelector('IED[name="SUB_A"]'),
+      );
+
+      sclEditor.undo();
+      oscdRemoveIedsPlugin.docVersion = Symbol('undo');
+      await oscdRemoveIedsPlugin.updateComplete;
+
+      expect(oscdRemoveIedsPlugin.doc).to.equal(doc);
+      expect(selectionList.items).to.have.lengthOf(2);
+      expect(selectionList.items.map(item => item.attachedElement)).to.deep.equal(
+        Array.from(doc.querySelectorAll('IED')),
+      );
     });
   });
 

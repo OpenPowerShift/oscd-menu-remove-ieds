@@ -53,7 +53,7 @@ function getIedDescription(ied: Element): {
   return { firstLine, secondLine };
 }
 
-/** An editor [[`plugin`]] to remove IEDs from SCL files */
+/** A menu plugin to remove IEDs from SCL files */
 export default class OscdRemoveIEDs extends ScopedElementsMixin(LitElement) {
   static scopedElements = {
     'oscd-dialog': OscdDialog,
@@ -66,8 +66,8 @@ export default class OscdRemoveIEDs extends ScopedElementsMixin(LitElement) {
   doc!: XMLDocument;
 
   /** SCL change indicator */
-  @property({ type: Number })
-  editCount = -1;
+  @property({ attribute: false })
+  docVersion?: unknown;
 
   @state()
   items: SelectItem[] = [];
