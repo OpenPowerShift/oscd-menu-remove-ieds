@@ -54,6 +54,13 @@ Feel free to log issues to request fixes, improvements or new features.
 
 == How to use?
 
+Select the IEDs to remove, then choose *Remove IEDs*. By default, associated
+LNodes are preserved with `iedName="None"`; matching duplicates are removed.
+Check *Remove associated LNodes* to delete these LNodes instead.
+The option is enabled when at least one selected IED has public LNode bindings
+in the substation model. It resets to unchecked whenever the dialog opens or
+the selection no longer includes any bound IEDs.
+
 NOTE: The distribution instructions below require a host that handles `oscd-edit-v2` events and supplies the current `doc` and reactive `docVersion` properties. Older hosts that only supply `editCount` need updating. No action-translation plugin is required for an EditV2-compatible host.
 
 === Online Using the Latest open-scd-core

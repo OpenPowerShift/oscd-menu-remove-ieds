@@ -6,12 +6,13 @@ import { OscdDialog } from '@omicronenergy/oscd-ui/dialog/OscdDialog.js';
 import { OscdDivider } from '@omicronenergy/oscd-ui/divider/OscdDivider.js';
 import { OscdTextButton } from '@omicronenergy/oscd-ui/button/OscdTextButton.js';
 import { OscdFilledButton } from '@omicronenergy/oscd-ui/button/OscdFilledButton.js';
+import { OscdCheckbox } from '@omicronenergy/oscd-ui/checkbox/OscdCheckbox.js';
 import {
   OscdSelectionList,
   type SelectItem,
 } from '@omicronenergy/oscd-ui/selection-list/OscdSelectionList.js';
 
-import { removeIED } from '@openscd/scl-lib';
+import { isPublic, removeIED } from '@openscd/scl-lib';
 import { newEditEventV2 } from '@openscd/oscd-api/utils.js';
 
 function getIedDescription(ied: Element): {
@@ -62,6 +63,7 @@ export default class OscdRemoveIEDs extends ScopedElementsMixin(LitElement) {
     'oscd-divider': OscdDivider,
     'oscd-text-button': OscdTextButton,
     'oscd-filled-button': OscdFilledButton,
+    'oscd-checkbox': OscdCheckbox,
     'oscd-selection-list': OscdSelectionList,
   };
 
@@ -79,12 +81,28 @@ export default class OscdRemoveIEDs extends ScopedElementsMixin(LitElement) {
   @state()
   private hasSelection = false;
 
+  @state()
+  private hasBoundLNodes = false;
+
+  @state()
+  private preserveLNodes = true;
+
   @query('#selection-dialog') dialogUI!: OscdDialog;
 
   @query('#selection-list') selectionList!: OscdSelectionList;
 
+  @query('#remove-lnodes') private lNodeCheckbox!: OscdCheckbox;
+
+  private boundIedNames = new Set<string>();
+
   willUpdate(changedProperties: PropertyValues): void {
     if (changedProperties.has('doc') || changedProperties.has('docVersion')) {
+      this.boundIedNames = new Set(
+        Array.from(this.doc?.querySelectorAll('Substation LNode') ?? [])
+          .filter(isPublic)
+          .map(ln => ln.getAttribute('iedName'))
+          .filter((name): name is string => name !== null && name !== 'None'),
+      );
       this.items = Array.from(this.doc?.querySelectorAll('IED') ?? []).map(
         (ied) => {
           const { firstLine, secondLine } = getIedDescription(ied);
@@ -97,22 +115,40 @@ export default class OscdRemoveIEDs extends ScopedElementsMixin(LitElement) {
         },
       );
       this.hasSelection = false;
+      this.hasBoundLNodes = false;
+      this.preserveLNodes = true;
     }
   }
 
   private handleSelectionChange(): void {
-    this.hasSelection = this.selectionList.selectedElements.length > 0;
+    const selected = this.selectionList.selectedElements;
+    this.hasSelection = selected.length > 0;
+    this.hasBoundLNodes = selected.some(ied =>
+      this.boundIedNames.has(ied.getAttribute('name') ?? ''),
+    );
+    if (!this.hasBoundLNodes) {
+      this.preserveLNodes = true;
+    }
+  }
+
+  private handleLNodeChange(): void {
+    this.preserveLNodes = !this.lNodeCheckbox.checked;
   }
 
   async run() {
-    this.dialogUI.show();
+    this.preserveLNodes = true;
+    await this.updateComplete;
+    await this.dialogUI.show();
   }
 
   async removeIEDs(): Promise<void> {
     const ieds = this.selectionList.selectedElements;
+    const preserveLNodes = this.preserveLNodes;
 
     for await (const ied of ieds) {
-      this.dispatchEvent(newEditEventV2(removeIED({ node: ied })));
+      this.dispatchEvent(
+        newEditEventV2(removeIED({ node: ied }, { preserveLNodes })),
+      );
     }
 
     this.clearSelection();
@@ -120,6 +156,8 @@ export default class OscdRemoveIEDs extends ScopedElementsMixin(LitElement) {
 
   clearSelection(): void {
     this.hasSelection = false;
+    this.hasBoundLNodes = false;
+    this.preserveLNodes = true;
     if (this.selectionList) {
       this.items = this.selectionList.items.map(item => ({
         ...item,
@@ -141,9 +179,18 @@ export default class OscdRemoveIEDs extends ScopedElementsMixin(LitElement) {
       <div slot="headline">Remove IEDs</div>
       <form slot="content" id="selection" method="dialog">
         <p>
-          Select the IEDs to remove from this SCL document. Use the search field
-          to find IEDs, then choose Remove IEDs to apply the changes.
+          Select the IEDs to remove from this SCL document. By default,
+          associated LNodes are preserved with iedName="None", merging duplicates.
         </p>
+        <label class="lnode-option">
+          <oscd-checkbox
+            id="remove-lnodes"
+            .checked=${!this.preserveLNodes}
+            .disabled=${!this.hasBoundLNodes}
+            @change=${this.handleLNodeChange}
+          ></oscd-checkbox>
+          Remove associated LNodes
+        </label>
         <oscd-divider></oscd-divider>
         <oscd-selection-list
           id="selection-list"
@@ -177,7 +224,7 @@ export default class OscdRemoveIEDs extends ScopedElementsMixin(LitElement) {
   static styles = css`
     form {
       display: grid;
-      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      grid-template-rows: auto auto auto minmax(0, 1fr) auto;
       height: min(400px, calc(100dvh - 240px));
       padding: 0;
       margin-block-end: 0px;
@@ -185,6 +232,13 @@ export default class OscdRemoveIEDs extends ScopedElementsMixin(LitElement) {
 
     form p {
       margin: 16px 24px;
+    }
+
+    .lnode-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 24px 16px;
     }
 
     #selection-list {

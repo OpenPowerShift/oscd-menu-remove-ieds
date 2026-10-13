@@ -183,6 +183,8 @@ export const testDocs = {
           <LNode iedName="IED2" ldInst="CB" lnClass="CSWI" lnInst="1" lnType="CSWI_Test"/>
           <LNode iedName="IED1" ldInst="CB" lnClass="CILO" lnInst="1" lnType="CILO_Test"/>
           <LNode iedName="IED2" ldInst="CB" lnClass="CILO" lnInst="1" lnType="CILO_Test"/>
+          <LNode iedName="None" ldInst="CBSW" lnClass="XCBR" lnInst="1" lnType="XCBR_Test"/>
+          <LNode iedName="None" ldInst="CB" lnClass="CSWI" lnInst="2" lnType="CSWI_Test"/>
         </ConductingEquipment>
       </Bay>
     </VoltageLevel>
