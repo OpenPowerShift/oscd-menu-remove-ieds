@@ -1,9 +1,11 @@
-import { css, html, LitElement } from 'lit';
+import { css, html, LitElement, type PropertyValues } from 'lit';
 import { property, query, state } from 'lit/decorators.js';
 
 import { ScopedElementsMixin } from '@open-wc/scoped-elements/lit-element.js';
 import { OscdDialog } from '@omicronenergy/oscd-ui/dialog/OscdDialog.js';
+import { OscdDivider } from '@omicronenergy/oscd-ui/divider/OscdDivider.js';
 import { OscdTextButton } from '@omicronenergy/oscd-ui/button/OscdTextButton.js';
+import { OscdFilledButton } from '@omicronenergy/oscd-ui/button/OscdFilledButton.js';
 import {
   OscdSelectionList,
   type SelectItem,
@@ -57,7 +59,9 @@ function getIedDescription(ied: Element): {
 export default class OscdRemoveIEDs extends ScopedElementsMixin(LitElement) {
   static scopedElements = {
     'oscd-dialog': OscdDialog,
+    'oscd-divider': OscdDivider,
     'oscd-text-button': OscdTextButton,
+    'oscd-filled-button': OscdFilledButton,
     'oscd-selection-list': OscdSelectionList,
   };
 
@@ -72,9 +76,33 @@ export default class OscdRemoveIEDs extends ScopedElementsMixin(LitElement) {
   @state()
   items: SelectItem[] = [];
 
+  @state()
+  private hasSelection = false;
+
   @query('#selection-dialog') dialogUI!: OscdDialog;
 
   @query('#selection-list') selectionList!: OscdSelectionList;
+
+  willUpdate(changedProperties: PropertyValues): void {
+    if (changedProperties.has('doc') || changedProperties.has('docVersion')) {
+      this.items = Array.from(this.doc?.querySelectorAll('IED') ?? []).map(
+        (ied) => {
+          const { firstLine, secondLine } = getIedDescription(ied);
+          return {
+            headline: `${ied.getAttribute('name')!} — ${firstLine}`,
+            supportingText: secondLine,
+            attachedElement: ied,
+            selected: false,
+          };
+        },
+      );
+      this.hasSelection = false;
+    }
+  }
+
+  private handleSelectionChange(): void {
+    this.hasSelection = this.selectionList.selectedElements.length > 0;
+  }
 
   async run() {
     this.dialogUI.show();
@@ -91,11 +119,13 @@ export default class OscdRemoveIEDs extends ScopedElementsMixin(LitElement) {
   }
 
   clearSelection(): void {
+    this.hasSelection = false;
     if (this.selectionList) {
-      this.selectionList.items = this.selectionList.items.map(item => ({
+      this.items = this.selectionList.items.map(item => ({
         ...item,
         selected: false,
       }));
+      this.selectionList.items = this.items;
       this.selectionList.searchValue = '';
     }
   }
@@ -108,24 +138,21 @@ export default class OscdRemoveIEDs extends ScopedElementsMixin(LitElement) {
         this.clearSelection();
       }}
     >
+      <div slot="headline">Remove IEDs</div>
       <form slot="content" id="selection" method="dialog">
+        <p>
+          Select the IEDs to remove from this SCL document. Use the search field
+          to find IEDs, then choose Remove IEDs to apply the changes.
+        </p>
+        <oscd-divider></oscd-divider>
         <oscd-selection-list
           id="selection-list"
           multiselect
-          .items=${Array.from(this.doc?.querySelectorAll('IED') ?? []).map(
-            (ied) => {
-              const { firstLine, secondLine } = getIedDescription(ied);
-
-              return {
-                headline: `${ied.getAttribute('name')!} — ${firstLine}`,
-                supportingText: secondLine,
-                attachedElement: ied,
-                selected: false,
-              };
-            },
-          )}
+          .items=${this.items}
+          @selection-list-change=${this.handleSelectionChange}
           filterable
         ></oscd-selection-list>
+        <oscd-divider></oscd-divider>
       </form>
       <div slot="actions">
         <oscd-text-button
@@ -133,14 +160,15 @@ export default class OscdRemoveIEDs extends ScopedElementsMixin(LitElement) {
             this.dialogUI.close();
             this.clearSelection();
           }}
-          >Close</oscd-text-button
+          >Cancel</oscd-text-button
         >
-        <oscd-text-button
+        <oscd-filled-button
+          .disabled=${!this.hasSelection}
           @click="${() => {
             this.removeIEDs();
           }}"
           form="selection"
-          >Remove IEDs</oscd-text-button
+          >Remove IEDs</oscd-filled-button
         >
       </div></oscd-dialog
     >`;
@@ -148,7 +176,22 @@ export default class OscdRemoveIEDs extends ScopedElementsMixin(LitElement) {
 
   static styles = css`
     form {
-      padding: 10px;
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      height: min(400px, calc(100dvh - 240px));
+      padding: 0;
+      margin-block-end: 0px;
+    }
+
+    form p {
+      margin: 16px 24px;
+    }
+
+    #selection-list {
+      display: block;
+      min-height: 0;
+      overflow-y: auto;
+      background: var(--md-list-container-color, var(--md-sys-color-surface));
     }
   `;
 }

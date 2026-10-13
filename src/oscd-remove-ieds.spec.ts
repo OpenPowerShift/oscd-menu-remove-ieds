@@ -5,6 +5,7 @@ import { XMLEditor } from '@openscd/oscd-editor';
 
 import type { EditDetailV2 } from '@openscd/oscd-api';
 import type { OscdSelectionList } from '@omicronenergy/oscd-ui/selection-list/OscdSelectionList.js';
+import { OscdFilledButton } from '@omicronenergy/oscd-ui/button/OscdFilledButton.js';
 import { testDocs, parseDoc } from './oscd-remove-ieds.testfiles.js';
 import OscdRemoveIEDs from './oscd-remove-ieds.js';
 
@@ -66,6 +67,12 @@ describe('oscd-remove-ieds', () => {
       const dialog =
         oscdRemoveIedsPlugin.shadowRoot!.querySelector('#selection-dialog');
       expect(dialog).to.exist;
+      expect(dialog!.querySelector('[slot="headline"]')?.textContent).to.equal(
+        'Remove IEDs',
+      );
+      expect(dialog!.querySelector('[slot="content"] p')?.textContent).to.contain(
+        'Select the IEDs to remove from this SCL document.',
+      );
     });
 
     it('renders the selection list', () => {
@@ -101,14 +108,43 @@ describe('oscd-remove-ieds', () => {
       expect(pubItem!.supportingText).to.contain('1.0');
     });
 
-    it('renders Close and Remove IEDs buttons', () => {
+    it('renders a Cancel text button and a filled Remove IEDs button', () => {
       const buttons =
-        oscdRemoveIedsPlugin.shadowRoot!.querySelectorAll('oscd-text-button');
-      const buttonLabels = Array.from(buttons).map(
-        btn => btn.textContent?.trim(),
+        oscdRemoveIedsPlugin.shadowRoot!.querySelectorAll('[slot="actions"] > *');
+      expect(buttons[0].tagName).to.equal('OSCD-TEXT-BUTTON');
+      expect(buttons[0].textContent?.trim()).to.equal('Cancel');
+      expect(buttons[1]).to.be.instanceOf(OscdFilledButton);
+      expect(buttons[1].textContent?.trim()).to.equal('Remove IEDs');
+    });
+
+    it('enables removal only while IEDs are selected without clearing the selection', async () => {
+      const button = oscdRemoveIedsPlugin.shadowRoot!.querySelector(
+        'oscd-filled-button',
       );
-      expect(buttonLabels).to.include('Close');
-      expect(buttonLabels).to.include('Remove IEDs');
+      expect(button).to.be.instanceOf(OscdFilledButton);
+      if (!(button instanceof OscdFilledButton)) {
+        throw new Error('Remove IEDs button did not upgrade');
+      }
+      const list = oscdRemoveIedsPlugin.selectionList;
+      await list.updateComplete;
+      expect(button.disabled).to.be.true;
+
+      const item = list.shadowRoot!.querySelector('oscd-list-item')!;
+      item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await oscdRemoveIedsPlugin.updateComplete;
+      expect(button.disabled).to.be.false;
+      expect(list.selectedElements).to.have.lengthOf(1);
+
+      item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await oscdRemoveIedsPlugin.updateComplete;
+      expect(button.disabled).to.be.true;
+
+      item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await oscdRemoveIedsPlugin.updateComplete;
+      oscdRemoveIedsPlugin.clearSelection();
+      await oscdRemoveIedsPlugin.updateComplete;
+      expect(button.disabled).to.be.true;
+      expect(list.selectedElements).to.have.lengthOf(0);
     });
 
     it('dispatches oscd-edit-v2 events when removing IEDs', async () => {
