@@ -398,8 +398,8 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
 | 3 | Add `src/testing/` plugin/driver/fixtures; rewrite specs; coverage thresholds | Done |
 | 4 | Add `@lit/localize`, `theme.ts`, palette, host sizing, empty state, option wording; component tests | Done |
 | 5 | Fix cancel/Escape, empty-selection guard, options collapse, selection preservation, dangling separator | Done |
-| 6 | Add visual config, screenshot tests, local fonts | Planned |
-| 7 | Replace CI workflows, release config, package contents, `.gitattributes`; validate YAML | Planned |
+| 6 | Add visual config, screenshot tests, local fonts | Done |
+| 7 | Replace CI workflows, release config, package contents, `.gitattributes`, demo; validate YAML | Planned |
 | 8 | Replace CI workflows, release config, package contents, `.gitattributes`; validate YAML | Planned |
 | 9 | Add Antora docs, image symlinks, README; update orchestrator playbook | Planned |
 | 10 | Final verification: lint, tsc, build, test, bundle, fallback, pack, legacy search, demo | Planned |
@@ -450,6 +450,24 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
   initializer throws on the getter); the driver must not treat an already
   selected item as selectable; the review `Close` button is in the dialog's
   light DOM, not its shadow root.
+
+### 2026-10-20 - step 6: screenshot tests
+
+- Added `src/oscd-menu-remove-ieds.test.ts` with 11 states: initial, selected
+  IED, SubNetwork options, Communication options, confirmation, both SCL review
+  dialogs, no IEDs, search, dark theme and no additional options.
+- Added `test/support/visual-runner-html.js` with local Roboto and Material
+  Symbols fonts and the de-animation styles.
+- Configured the `visual` group for Chromium only, with stable font-rendering
+  flags, the CI-owned baseline paths (`test/screenshots/baseline`) and the
+  failed-image paths.
+- Added `.gitattributes` (`test/**/*.png binary`, no LFS) and ignored
+  `test/screenshots/failed/` and `.rollup.cache`.
+- `npm run test:visual` runs all 11 tests and fails only because there is no
+  baseline yet. This is expected: the `Update visual baselines` workflow owns
+  the first set.
+- Problem found: the search `BOUND` also matches `DEMO_UNBOUND`; the screenshot
+  test uses `DEMO_BOUND` instead.
 
 ### 2026-10-20 - review and branch setup
 

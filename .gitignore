@@ -4,12 +4,15 @@ node_modules
 ## editors
 /.idea
 /.vscode
+/.codex
 
 ## build artifacts
-dist
-coverage
-doc
+/.rollup.cache
+/dist
+/coverage
+/doc
 
+## test output
+/test/screenshots/failed/
 
-.codex
 profiling/*

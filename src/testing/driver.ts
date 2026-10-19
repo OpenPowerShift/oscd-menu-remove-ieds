@@ -264,6 +264,20 @@ export class PluginDriver {
     await this.settle();
   }
 
+  /** Waits until the confirmation dialog is open. */
+  async waitForConfirmation(): Promise<void> {
+    await this.waitForOpen(this.confirmation);
+    await this.settle();
+  }
+
+  /** Scrolls the options panel to its last row. */
+  scrollOptionsToEnd(): void {
+    const panel = this.root.querySelector('.removal-options');
+    if (panel !== null) {
+      panel.scrollTop = panel.scrollHeight;
+    }
+  }
+
   async confirm(): Promise<void> {
     await this.waitForOpen(this.confirmation);
     const button = deepQueryAll(
