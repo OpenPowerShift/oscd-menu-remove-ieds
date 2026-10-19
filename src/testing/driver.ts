@@ -107,6 +107,9 @@ export class PluginDriver {
   /** The IEDs in the list, in document order. */
   ieds(): ListedIed[] {
     const list = this.selectionList;
+    if (list === null || list === undefined) {
+      return [];
+    }
     const items = Array.from(
       list.shadowRoot?.querySelectorAll('oscd-list-item') ?? [],
     );
@@ -126,43 +129,69 @@ export class PluginDriver {
       .map(item => item.name);
   }
 
+  private async setSelected(name: string, selected: boolean): Promise<void> {
+    if (this.selectionList === null || this.selectionList === undefined) {
+      throw new Error(`The IED "${name}" is not in the list`);
+    }
+    const index = this.selectionList.items.findIndex(
+      item => item.attachedElement?.getAttribute('name') === name,
+    );
+    if (index < 0) {
+      throw new Error(`The IED "${name}" is not in the list`);
+    }
+    if (this.selectionList.items[index].selected !== selected) {
+      const item = this.selectionList.shadowRoot?.querySelectorAll(
+        'oscd-list-item',
+      )[index];
+      if (item === undefined) {
+        throw new Error(`The list item for "${name}" is not rendered`);
+      }
+      item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    }
+    await this.settle();
+  }
+
   async select(...names: string[]): Promise<void> {
     for (const name of names) {
-      const index = this.selectionList.items.findIndex(
-        item => item.attachedElement?.getAttribute('name') === name,
-      );
-      if (index < 0) {
-        throw new Error(`The IED "${name}" is not in the list`);
-      }
-      if (!this.selectionList.items[index].selected) {
-        const item = this.selectionList.shadowRoot?.querySelectorAll(
-          'oscd-list-item',
-        )[index];
-        if (item === undefined) {
-          throw new Error(`The list item for "${name}" is not rendered`);
-        }
-        item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      }
-      await this.settle();
+      await this.setSelected(name, true);
     }
   }
 
   async deselect(...names: string[]): Promise<void> {
     for (const name of names) {
-      const item = this.ieds().find(entry => entry.name === name);
-      if (item === undefined) {
-        throw new Error(`The IED "${name}" is not in the list`);
-      }
-      if (item.selected) {
-        await this.select(name);
-      }
+      await this.setSelected(name, false);
     }
   }
 
   async search(text: string): Promise<void> {
+    if (this.selectionList === null || this.selectionList === undefined) {
+      return;
+    }
     this.selectionList.searchValue = text;
     this.selectionList.requestUpdate();
     await this.settle();
+  }
+
+  /** The visible text of the selection dialog. */
+  dialogText(): string {
+    return normalize(this.selectionDialog?.textContent);
+  }
+
+  /** The labels of the dialog actions, in screen order. */
+  actionLabels(): string[] {
+    return Array.from(
+      this.root.querySelectorAll(
+        '#selection-dialog > [slot="actions"] > *',
+      ),
+    ).map(element => normalize(element.textContent));
+  }
+
+  /** Whether the Remove button is disabled. */
+  removeDisabled(): boolean {
+    const button = this.root.querySelector(
+      '#selection-dialog > [slot="actions"] oscd-filled-button',
+    ) as HTMLButtonElement | null;
+    return button?.disabled ?? true;
   }
 
   /** The visible removal options, in screen order. */
@@ -207,6 +236,20 @@ export class PluginDriver {
       throw new Error(`The option "${text}" is not shown`);
     }
     checkbox.click();
+    await this.settle();
+  }
+
+  /** Clicks the Cancel button. */
+  async cancelSelection(): Promise<void> {
+    const button = deepQueryAll(
+      this.root,
+      '#selection-dialog > [slot="actions"] oscd-text-button',
+    ).find(element => normalize(element.textContent) === 'Cancel');
+    if (button === undefined) {
+      throw new Error('The Cancel button is not rendered');
+    }
+    button.click();
+    await waitUntil(() => !this.dialogOpen, 'the selection dialog stayed open');
     await this.settle();
   }
 
@@ -286,9 +329,8 @@ export class PluginDriver {
   }
 
   async closeReview(): Promise<void> {
-    const button = deepQueryAll(
-      this.reviewDialog.shadowRoot!,
-      'oscd-text-button',
+    const button = Array.from(
+      this.reviewDialog.querySelectorAll('oscd-text-button'),
     ).find(element => normalize(element.textContent) === 'Close');
     if (button === undefined) {
       throw new Error('The review Close button is missing');

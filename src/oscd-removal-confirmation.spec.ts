@@ -150,9 +150,15 @@ describe('oscd-removal-confirmation', () => {
     const warning = root.querySelector('.warning')!;
     expect(getComputedStyle(warning).borderInlineStartColor).to.equal('rgb(180, 120, 0)');
     expect(getComputedStyle(warning).color).to.equal('rgb(20, 20, 20)');
+    // The internal token wins while it is set; removing it lets the distro
+    // theme token take over.
     confirmation.style.setProperty('--oscd-theme-warning', 'rgb(150, 100, 0)');
+    expect(getComputedStyle(icon).color).to.equal('rgb(180, 120, 0)');
+    confirmation.style.removeProperty('--oscd-warning');
     expect(getComputedStyle(icon).color).to.equal('rgb(150, 100, 0)');
-    expect(getComputedStyle(warning).borderInlineStartColor).to.equal('rgb(150, 100, 0)');
+    expect(getComputedStyle(warning).borderInlineStartColor).to.equal(
+      'rgb(150, 100, 0)',
+    );
     await confirmation.close();
   });
 

@@ -395,11 +395,11 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
 | 0 | Review current state, create `upgrade`, write this plan | Done (`5c2c33e`) |
 | 1 | Fix the lockfile, remove `.husky`, install tooling hooks; rename package/entry/component; verify `npm ci`, `tsc`, lint, build, test | Done (`c30da4b`) |
 | 2 | Extract `foundation/ied-description.ts` and `foundation/removal-plan.ts`; unit tests | Done |
-| 3 | Add `src/testing/` plugin/driver/fixtures; rewrite specs; fix WebKit timeouts and warning assertion | In progress (helpers and fixtures added) |
-| 4 | Add `src/testing/` plugin/driver/fixtures; rewrite specs; fix WebKit timeouts and warning assertion | Planned |
-| 5 | Add `@lit/localize`, `theme.ts`, palette, host sizing, empty state, card/option wording; component tests | Planned |
-| 6 | Fix cancel/Escape, empty-selection guard, options collapse, dangling separator | Planned |
-| 7 | Add coverage thresholds, visual config, screenshot tests, local fonts | Planned |
+| 3 | Add `src/testing/` plugin/driver/fixtures; rewrite specs; coverage thresholds | Done |
+| 4 | Add `@lit/localize`, `theme.ts`, palette, host sizing, empty state, option wording; component tests | Done |
+| 5 | Fix cancel/Escape, empty-selection guard, options collapse, selection preservation, dangling separator | Done |
+| 6 | Add visual config, screenshot tests, local fonts | Planned |
+| 7 | Replace CI workflows, release config, package contents, `.gitattributes`; validate YAML | Planned |
 | 8 | Replace CI workflows, release config, package contents, `.gitattributes`; validate YAML | Planned |
 | 9 | Add Antora docs, image symlinks, README; update orchestrator playbook | Planned |
 | 10 | Final verification: lint, tsc, build, test, bundle, fallback, pack, legacy search, demo | Planned |
@@ -419,6 +419,37 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
 - Commands: `tsc` pass, lint pass, `npm test` 24 s and all 68 existing tests
   still pass. The old spec still uses internals; the rewrite follows the UI
   changes so the strings and structure are final.
+
+### 2026-10-20 - steps 3-5: localisation, theming, tests and fixes
+
+- Rewrote the root spec around `mountPlugin` and `PluginDriver`: 29 tests,
+  no private fields, no `Object.defineProperty`, no pixel coordinates and no
+  fixed waits. The confirmation spec still covers its own rendering.
+- Replaced the inline SCL documents with `test/fixtures/*.scd` and deleted
+  `src/oscd-menu-remove-ieds.testfiles.ts`.
+- Added `theme.ts`; the root maps every `--oscd-theme-*` colour to `--oscd-*`
+  and points `oscdMd3Mappings` at the internal palette. The confirmation
+  component inherits it and has safe standalone fallbacks.
+- Localized every user-visible string with `msg()` / `msg(str\`...\`)`, including
+  the search placeholder, dialog actions, review text and confirmation summary.
+- Added the host flex/height contract and removed `calc(100vh - Npx)`-style
+  dialog sizing. Added the 600 px host spec.
+- Added an empty state for documents without IEDs, collapsed the options panel
+  when there is nothing to show, and renamed the LNode option to "Delete
+  associated LNodes".
+- Removed the `@cancel` preventDefault, so Escape and the scrim close the
+  dialog; `@closed` now clears the selection and options.
+- Preserved the selection by IED name across external `docVersion` changes.
+  Added a guard for an empty selection in `removeIEDs()` and made
+  `clearSelection()` private.
+- Coverage thresholds are now 95 statements / 90 branches / 95 functions /
+  95 lines, excluding test helpers and specs.
+- Commands: `tsc` pass, lint pass, build pass, `npm test` 36.4 s and all 57
+  tests pass in Chromium, Firefox and WebKit. Coverage 97.65 %.
+- Problems found: `@query` fields must not have initializers in Lit (the
+  initializer throws on the getter); the driver must not treat an already
+  selected item as selectable; the review `Close` button is in the dialog's
+  light DOM, not its shadow root.
 
 ### 2026-10-20 - review and branch setup
 

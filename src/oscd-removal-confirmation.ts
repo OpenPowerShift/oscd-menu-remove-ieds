@@ -1,21 +1,25 @@
 import { css, html, LitElement, nothing } from 'lit';
 import { property, query } from 'lit/decorators.js';
+
+import { msg, str } from '@lit/localize';
 import { ScopedElementsMixin } from '@open-wc/scoped-elements/lit-element.js';
-import { OscdDialog } from '@omicronenergy/oscd-ui/dialog/OscdDialog.js';
-import { OscdTextButton } from '@omicronenergy/oscd-ui/button/OscdTextButton.js';
 import { OscdFilledButton } from '@omicronenergy/oscd-ui/button/OscdFilledButton.js';
+import { OscdDialog } from '@omicronenergy/oscd-ui/dialog/OscdDialog.js';
 import { OscdIcon } from '@omicronenergy/oscd-ui/icon/OscdIcon.js';
+import { OscdTextButton } from '@omicronenergy/oscd-ui/button/OscdTextButton.js';
 
 import type { RemovalSummary } from './foundation/removal-plan.js';
 
 export type { RemovalSummary };
 
-export default class OscdRemovalConfirmation extends ScopedElementsMixin(LitElement) {
+export default class OscdRemovalConfirmation extends ScopedElementsMixin(
+  LitElement,
+) {
   static scopedElements = {
     'oscd-dialog': OscdDialog,
-    'oscd-text-button': OscdTextButton,
     'oscd-filled-button': OscdFilledButton,
     'oscd-icon': OscdIcon,
+    'oscd-text-button': OscdTextButton,
   };
 
   @property({ attribute: false })
@@ -23,13 +27,6 @@ export default class OscdRemovalConfirmation extends ScopedElementsMixin(LitElem
 
   @query('oscd-dialog')
   private dialogUI!: OscdDialog;
-
-  private handleConfirm(): void {
-    if (this.summary === null) {
-      return;
-    }
-    this.dispatchEvent(new CustomEvent('confirm', { bubbles: true, composed: true }));
-  }
 
   get open(): boolean {
     return this.dialogUI?.open ?? false;
@@ -44,74 +41,146 @@ export default class OscdRemovalConfirmation extends ScopedElementsMixin(LitElem
     await this.dialogUI.close();
   }
 
+  private handleConfirm(): void {
+    if (this.summary === null) {
+      return;
+    }
+    this.dispatchEvent(
+      new CustomEvent('confirm', { bubbles: true, composed: true }),
+    );
+  }
+
   render() {
     const summary = this.summary;
     return html`
       <oscd-dialog>
         <div slot="headline" class="confirmation-headline">
           <oscd-icon class="warning-icon" aria-hidden="true">warning</oscd-icon>
-          Review removal impacts
+          ${msg('Review removal impacts')}
         </div>
         <div slot="content" class="confirmation-content">
-          ${summary !== null ? html`
-            <p>The following will be removed:</p>
-            <p><strong>IEDs:</strong></p>
-            <ul class="ied-names">
-              ${summary.iedNames.map(name => html`<li>${name}</li>`)}
-            </ul>
-            ${summary.hasBoundLNodes ? summary.preserveLNodes ? html`
-              <p>Unique associated LNodes will be preserved with iedName="None",
-                removing any duplicates.</p>
-            ` : html`
-              <p><strong>LNodes:</strong> All LNodes bound to the IEDs above.</p>
-            ` : nothing}
-            ${summary.deleteCommunication ? html`
-              <p><strong>Communication:</strong> The entire section (including ALL SubNetworks).</p>
-            ` : summary.deletedSubNetworks.length > 0 ? html`
-              <p><strong>SubNetworks:</strong></p>
-              <ul class="subnetwork-names">
-                ${summary.deletedSubNetworks.map(name => html`<li>${name}</li>`)}
-              </ul>
-            ` : nothing}
-            ${summary.deleteCommunication || summary.deletedSubNetworks.length > 0 ? html`
-              <div class="warning deletion-warning">
-                <p>Deleted sections lose all their contents, including metadata and Private data.</p>
-              </div>
-            ` : nothing}
-            <div class=${summary.retainedSubNetworks.length > 0 || summary.retainCommunication ? 'warning' : 'notice'}>
-              ${summary.retainedSubNetworks.length > 0 ? html`
-                <p>Retained SubNetworks: ${summary.retainedSubNetworks.join(', ')}.
-                  <br><em>This violates the SCL schema.</em></p>` : nothing}
-              ${summary.retainCommunication ? html`
-                <p>Retain Communication without SubNetworks. <br><em>This violates the SCL schema.</em></p>
-              ` : nothing}
-            </div>
-            <p><strong>Tip:</strong> To avoid potential data loss and/or empty sections,
-              cancel this operation and review the ConnectedAPs first.</p>
-          ` : nothing}
+          ${summary !== null
+            ? html`
+                <p>${msg('The following will be removed:')}</p>
+                <p><strong>${msg('IEDs:')}</strong></p>
+                <ul class="ied-names">
+                  ${summary.iedNames.map(name => html`<li>${name}</li>`)}
+                </ul>
+                ${summary.hasBoundLNodes
+                  ? summary.preserveLNodes
+                    ? html`
+                        <p>
+                          ${msg(
+                            'Unique associated LNodes will be preserved with iedName="None", removing any duplicates.',
+                          )}
+                        </p>
+                      `
+                    : html`
+                        <p>
+                          <strong>${msg('LNodes:')}</strong>
+                          ${msg('All LNodes bound to the IEDs above.')}
+                        </p>
+                      `
+                  : nothing}
+                ${summary.deleteCommunication
+                  ? html`
+                      <p>
+                        <strong>${msg('Communication:')}</strong>
+                        ${msg(
+                          'The entire section (including ALL SubNetworks).',
+                        )}
+                      </p>
+                    `
+                  : summary.deletedSubNetworks.length > 0
+                    ? html`
+                        <p><strong>${msg('SubNetworks:')}</strong></p>
+                        <ul class="subnetwork-names">
+                          ${summary.deletedSubNetworks.map(
+                            name => html`<li>${name}</li>`,
+                          )}
+                        </ul>
+                      `
+                    : nothing}
+                ${summary.deleteCommunication ||
+                summary.deletedSubNetworks.length > 0
+                  ? html`
+                      <div class="warning deletion-warning">
+                        <p>
+                          ${msg(
+                            'Deleted sections lose all their contents, including metadata and Private data.',
+                          )}
+                        </p>
+                      </div>
+                    `
+                  : nothing}
+                <div
+                  class=${summary.retainedSubNetworks.length > 0 ||
+                  summary.retainCommunication
+                    ? 'warning'
+                    : 'notice'}
+                >
+                  ${summary.retainedSubNetworks.length > 0
+                    ? html`
+                        <p>
+                          ${msg(
+                            str`Retained SubNetworks: ${summary.retainedSubNetworks.join(
+                              ', ',
+                            )}.`,
+                          )}
+                          <br /><em>${msg('This violates the SCL schema.')}</em>
+                        </p>
+                      `
+                    : nothing}
+                  ${summary.retainCommunication
+                    ? html`
+                        <p>
+                          ${msg('Retain Communication without SubNetworks.')}
+                          <br /><em>${msg('This violates the SCL schema.')}</em>
+                        </p>
+                      `
+                    : nothing}
+                </div>
+                <p>
+                  <strong>${msg('Tip:')}</strong>
+                  ${msg(
+                    'To avoid potential data loss and/or empty sections, cancel this operation and review the ConnectedAPs first.',
+                  )}
+                </p>
+              `
+            : nothing}
         </div>
         <div slot="actions">
-          <oscd-text-button type="button" @click=${this.close}>Back</oscd-text-button>
-          <oscd-filled-button type="button" .disabled=${summary === null}
-            @click=${this.handleConfirm}>Confirm</oscd-filled-button>
+          <oscd-text-button type="button" @click=${this.close}
+            >${msg('Back')}</oscd-text-button
+          >
+          <oscd-filled-button
+            type="button"
+            .disabled=${summary === null}
+            @click=${this.handleConfirm}
+            >${msg('Confirm')}</oscd-filled-button
+          >
         </div>
       </oscd-dialog>
     `;
   }
 
   static styles = css`
+    :host {
+      color: var(--md-sys-color-on-surface, #657b83);
+    }
+
+    .confirmation-content {
+      background: var(--md-sys-color-surface);
+      color: var(--md-sys-color-on-surface, #657b83);
+    }
+
     oscd-dialog > .confirmation-headline {
       padding-block: 24px;
     }
 
     .confirmation-headline > .warning-icon {
       --md-icon-size: 32px;
-      color: var(--oscd-theme-warning, var(--oscd-warning, var(--md-sys-color-on-surface)));
-    }
-
-    oscd-dialog > .confirmation-content {
-      background: var(--md-sys-color-surface);
-      color: var(--md-sys-color-on-surface);
+      color: var(--oscd-warning, var(--oscd-theme-warning, #b58900));
     }
 
     .ied-names,
@@ -120,7 +189,8 @@ export default class OscdRemovalConfirmation extends ScopedElementsMixin(LitElem
     }
 
     .confirmation-content > .warning {
-      border-inline-start: 4px solid var(--oscd-theme-warning, var(--oscd-warning, var(--md-sys-color-on-surface)));
+      border-inline-start: 4px solid
+        var(--oscd-warning, var(--oscd-theme-warning, #b58900));
       padding-inline-start: 12px;
     }
   `;
