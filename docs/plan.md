@@ -516,6 +516,20 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
   Do not let the orchestrator build this branch before the baseline workflow
   runs.
 
+### 2026-10-20 - check: removal atomicity
+
+- Confirmed each removal is one host action. `removeIEDs` dispatches one
+  `oscd-edit-v2` per IED with `squash: false` on the first and `squash: true`
+  afterwards, then the section edits with `squash: true`. The host merges the
+  squashed edits into one undo entry.
+- Added a regression test for two IEDs without section changes: one
+  `editor.past` entry, undo restores the original document, redo restores the
+  removed document.
+- Existing tests already cover one IED plus a deleted SubNetwork, Communication
+  deletion after a prior unrelated edit, and the LNode preserve/delete paths.
+- No proxy for atomicity exists if the host cannot apply an edit midway: the
+  first non-squashed event starts the entry and later events merge into it.
+
 ### 2026-10-20 - follow-up: visual baseline stability
 
 - The baselines were captured while the dialog open animation was still

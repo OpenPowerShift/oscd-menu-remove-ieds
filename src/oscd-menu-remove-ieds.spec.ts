@@ -285,6 +285,26 @@ describe('oscd-menu-remove-ieds', () => {
       expect(serialized(mounted.doc)).to.equal(original);
     });
 
+    it('groups several IEDs without section changes into one undo entry', async () => {
+      await mount('duplicate-lnodes.scd');
+      await driver.open();
+      const original = serialized(mounted.doc);
+
+      await driver.select('IED1', 'IED2');
+      await driver.remove();
+      await waitForRemoval('IED1');
+
+      expect(iedNames(mounted.doc)).to.deep.equal([]);
+      expect(mounted.editor.past).to.have.lengthOf(1);
+      const removed = serialized(mounted.doc);
+
+      await mounted.undo();
+      expect(serialized(mounted.doc)).to.equal(original);
+
+      await mounted.redo();
+      expect(serialized(mounted.doc)).to.equal(removed);
+    });
+
     it('preserves unique LNodes by default and leaves other bindings unchanged', async () => {
       await mount('duplicate-lnodes.scd');
       await driver.open();
