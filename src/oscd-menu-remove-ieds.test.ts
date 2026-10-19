@@ -137,6 +137,15 @@ describe('oscd-menu-remove-ieds screenshots', () => {
     await shot('with a search');
   });
 
+  it('with all filtered IEDs selected', async () => {
+    await mountSample();
+    await driver.open();
+    await driver.search('DEMO_BOUND');
+    await driver.selectAllShown();
+    expect(driver.ieds().filter(item => item.selected)).to.have.lengthOf(2);
+    await shot('with all filtered IEDs selected');
+  });
+
   it('in a dark theme', async () => {
     await mountSample();
     const { plugin } = mounted;

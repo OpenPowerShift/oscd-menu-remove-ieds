@@ -25,6 +25,10 @@ Select the item again to remove the IED from the selection.
 The list has a search field.
 For more information, refer to xref:searching.adoc[].
 
+btn:[Select all shown] selects every IED which the current search shows.
+btn:[Clear selection] clears every selected IED.
+For more information, refer to xref:searching.adoc#select-shown[].
+
 == Removal options
 
 The *Removal options* panel appears when the selection has an effect on LNodes or on the communication sections.

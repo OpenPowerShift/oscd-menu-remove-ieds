@@ -1,4 +1,5 @@
 import { expect, waitUntil } from '@open-wc/testing';
+import { setViewport } from '@web/test-runner-commands';
 
 import { PluginDriver } from './testing/driver.js';
 import { mountPlugin } from './testing/plugin.js';
@@ -129,6 +130,40 @@ describe('oscd-menu-remove-ieds', () => {
       expect(driver.removeDisabled()).to.be.true;
     });
 
+    it('selects every IED which the search shows and clears them again', async () => {
+      await mount('communication-choices.scd');
+      await driver.open();
+
+      await driver.search('IED1');
+      expect(driver.visibleIeds()).to.deep.equal(['IED1']);
+      await driver.selectAllShown();
+      expect(
+        driver.ieds().filter(item => item.selected).map(item => item.name),
+      ).to.deep.equal(['IED1']);
+
+      await driver.search('');
+      await driver.selectAllShown();
+      expect(
+        driver.ieds().filter(item => item.selected).map(item => item.name),
+      ).to.deep.equal(['IED1', 'IED2', 'IED3']);
+
+      await driver.clearSelection();
+      expect(driver.ieds().filter(item => item.selected)).to.deep.equal([]);
+      expect(driver.visibleIeds()).to.deep.equal(['IED1', 'IED2', 'IED3']);
+    });
+
+    it('removes only the IEDs which the search shows', async () => {
+      await mount('communication-choices.scd');
+      await driver.open();
+
+      await driver.search('IED1');
+      await driver.selectAllShown();
+      await driver.remove();
+      await waitForRemoval('IED1');
+
+      expect(iedNames(mounted.doc)).to.deep.equal(['IED2', 'IED3']);
+    });
+
     it('fills a 600 px host without overflowing it', async () => {
       mounted = await mountPlugin({ fixture: 'multiple-ieds.scd', height: 600 });
       driver = new PluginDriver(mounted);
@@ -154,28 +189,46 @@ describe('oscd-menu-remove-ieds', () => {
       expect(driver.ieds().filter(item => item.selected)).to.have.lengthOf(1);
     });
 
-    it('uses only the height its options need', async () => {
-      await mount('duplicate-lnodes.scd');
-      await driver.open();
-      await driver.select('IED1');
+    it('places the options to the right of the list on a wide screen', async () => {
+      const original = {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
+      try {
+        await setViewport({ width: 1280, height: 800 });
+        await mount('duplicate-lnodes.scd');
+        await driver.open();
+        await driver.select('IED1');
 
-      const { form, options, list } = driver.layout();
-      expect(options).to.be.greaterThan(0);
-      expect(options).to.be.lessThan(form * 0.3);
-      expect(list).to.be.greaterThan(form * 0.35);
+        const layout = driver.layout();
+        expect(layout.optionsWidth).to.be.greaterThan(0);
+        expect(layout.optionsLeft).to.be.greaterThan(layout.listLeft);
+        expect(layout.optionsTop).to.be.lessThan(layout.listTop);
+        expect(layout.listTop - layout.optionsTop).to.be.lessThan(80);
+        expect(layout.listWidth).to.be.greaterThan(layout.optionsWidth);
+      } finally {
+        await setViewport(original);
+      }
     });
 
-    it('caps a long options panel and scrolls inside it', async () => {
-      await mount('communication-choices.scd');
-      await driver.open();
-      await driver.select('IED1', 'IED2', 'IED3');
-      await driver.clickOption('StationBus');
-      await driver.clickOption('ProcessBus');
+    it('stacks the options below the list on a narrow screen', async () => {
+      const original = {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
+      try {
+        await setViewport({ width: 600, height: 800 });
+        await mount('duplicate-lnodes.scd');
+        await driver.open();
+        await driver.select('IED1');
 
-      const { form, options, list } = driver.layout();
-      expect(options).to.be.at.most(form * 0.4 + 1);
-      expect(options).to.be.greaterThan(0);
-      expect(list).to.be.greaterThan(0);
+        const layout = driver.layout();
+        expect(layout.optionsTop).to.be.greaterThan(layout.listTop);
+        expect(layout.optionsWidth).to.be.greaterThan(0);
+        expect(layout.optionsWidth).to.be.at.least(layout.listWidth - 1);
+      } finally {
+        await setViewport(original);
+      }
     });
 
     it('is absent for an IED without bound LNodes', async () => {

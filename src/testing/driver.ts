@@ -163,6 +163,28 @@ export class PluginDriver {
     }
   }
 
+  /** Selects every IED which the current search shows. */
+  async selectAllShown(): Promise<void> {
+    const button = this.root.querySelector('.select-all') as HTMLElement | null;
+    if (button === null) {
+      throw new Error('The Select all shown button is not rendered');
+    }
+    button.click();
+    await this.settle();
+  }
+
+  /** Clears every selected IED without changing the search. */
+  async clearSelection(): Promise<void> {
+    const button = this.root.querySelector('.clear-selection') as
+      | HTMLElement
+      | null;
+    if (button === null) {
+      throw new Error('The Clear selection button is not rendered');
+    }
+    button.click();
+    await this.settle();
+  }
+
   async search(text: string): Promise<void> {
     if (this.selectionList === null || this.selectionList === undefined) {
       return;
@@ -211,15 +233,36 @@ export class PluginDriver {
     );
   }
 
-  /** The heights of the form, the options panel and the list. */
-  layout(): { form: number; options: number; list: number } {
-    const form = this.root.querySelector('form');
-    const options = this.root.querySelector('.removal-options');
-    const list = this.root.querySelector('#selection-list');
+  /** The size and position of the form, the options panel and the list. */
+  layout(): {
+    formWidth: number;
+    formHeight: number;
+    optionsWidth: number;
+    optionsHeight: number;
+    optionsLeft: number;
+    optionsTop: number;
+    listWidth: number;
+    listHeight: number;
+    listLeft: number;
+    listTop: number;
+  } {
+    const box = (selector: string): DOMRect =>
+      this.root.querySelector(selector)?.getBoundingClientRect() ??
+      new DOMRect();
+    const form = box('form');
+    const options = box('.removal-options');
+    const list = box('#selection-list');
     return {
-      form: form?.clientHeight ?? 0,
-      options: options?.clientHeight ?? 0,
-      list: list?.clientHeight ?? 0,
+      formWidth: form.width,
+      formHeight: form.height,
+      optionsWidth: options.width,
+      optionsHeight: options.height,
+      optionsLeft: options.left,
+      optionsTop: options.top,
+      listWidth: list.width,
+      listHeight: list.height,
+      listLeft: list.left,
+      listTop: list.top,
     };
   }
 

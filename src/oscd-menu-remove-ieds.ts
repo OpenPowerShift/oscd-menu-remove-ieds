@@ -126,6 +126,63 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
     this.applySelection(this.selectionList?.selectedElements ?? []);
   }
 
+  private handleSelectAllShown(): void {
+    // The selection list owns the search regex. Reading it keeps "shown" equal
+    // to the items which the list actually displays.
+    const searchRegex =
+      (
+        this.selectionList as unknown as {
+          searchRegex?: RegExp;
+        }
+      )?.searchRegex ?? /.*/i;
+    const names = new Set(
+      this.items
+        .filter(item =>
+          searchRegex.test(
+            `${item.headline} ${item.supportingText ?? ''}`,
+          ),
+        )
+        .map(item => item.attachedElement?.getAttribute('name'))
+        .filter(
+          (name): name is string => name !== undefined && name !== null,
+        ),
+    );
+    this.setSelectedNames(names, true);
+  }
+
+  private handleClearSelection(): void {
+    this.setSelectedNames(this.itemNames(), false);
+  }
+
+  private itemNames(): Set<string> {
+    return new Set(
+      this.items
+        .map(item => item.attachedElement?.getAttribute('name'))
+        .filter(
+          (name): name is string => name !== undefined && name !== null,
+        ),
+    );
+  }
+
+  private setSelectedNames(names: Set<string>, selected: boolean): void {
+    this.items = this.items.map((item) => {
+      const name = item.attachedElement?.getAttribute('name');
+      return name !== undefined && name !== null && names.has(name)
+        ? { ...item, selected }
+        : item;
+    });
+    if (this.selectionList !== null) {
+      this.selectionList.items = this.items;
+      this.selectionList.requestUpdate();
+    }
+    this.applySelection(
+      this.items
+        .filter(item => item.selected)
+        .map(item => item.attachedElement)
+        .filter((element): element is Element => element !== undefined),
+    );
+  }
+
   private handleRemoveLNodesChange(): void {
     this.preserveLNodes = !this.lNodeCheckbox.checked;
   }
@@ -264,6 +321,10 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
     this.resetRemovalChecks();
   }
 
+  private get hasRemovalOptions(): boolean {
+    return this.hasBoundLNodes || this.affectedSubNetworks.length > 0;
+  }
+
   private resetRemovalChecks(): void {
     this.affectedSubNetworks = [];
     this.deletedSubNetworks = new Set();
@@ -272,9 +333,8 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
   }
 
   private clearSelection(): void {
-    this.items = this.items.map(item => ({ ...item, selected: false }));
+    this.setSelectedNames(this.itemNames(), false);
     if (this.selectionList !== null) {
-      this.selectionList.items = this.items;
       this.selectionList.searchValue = '';
     }
     this.resetSelectionState();
@@ -322,9 +382,6 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
   }
 
   private renderRemovalOptions() {
-    if (!this.hasBoundLNodes && this.affectedSubNetworks.length === 0) {
-      return nothing;
-    }
     return html`
       <h3>${msg('Removal options')}</h3>
       ${this.hasBoundLNodes
@@ -467,41 +524,69 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
   render() {
     return html`<oscd-dialog
         id="selection-dialog"
+        class=${this.hasRemovalOptions ? 'with-options' : ''}
         @closed=${this.handleDialogClosed}
       >
         <div slot="headline">${msg('Remove IEDs')}</div>
-        <form slot="content" id="selection" method="dialog">
-          <p>
+        <form
+          slot="content"
+          id="selection"
+          method="dialog"
+          class=${this.hasRemovalOptions ? 'with-options' : ''}
+        >
+          <p class="intro">
             ${msg(
               'Select the IEDs to remove from this SCL document. By default, associated LNodes are preserved with iedName="None", merging duplicates.',
             )}
           </p>
-          <h3 class="selection-heading">${msg('Select IEDs')}</h3>
-          <oscd-divider></oscd-divider>
-          ${this.items.length === 0
-            ? html`<p class="empty-selection">
-                ${msg('This document has no IEDs.')}
-              </p>`
-            : html`
-                <oscd-selection-list
-                  id="selection-list"
-                  multiselect
-                  .items=${this.items}
-                  .searchhelper=${msg('Search IEDs')}
-                  aria-label=${msg('IEDs in the document')}
-                  @selection-list-change=${this.handleSelectionChange}
-                  filterable
-                ></oscd-selection-list>
-              `}
-          <oscd-divider></oscd-divider>
-          ${this.hasBoundLNodes || this.affectedSubNetworks.length > 0
+          <div class="selection-pane">
+            <div class="selection-header">
+              <h3 class="selection-heading">${msg('Select IEDs')}</h3>
+              ${this.items.length > 0
+                ? html`
+                    <div class="selection-actions">
+                      <oscd-text-button
+                        type="button"
+                        class="select-all"
+                        @click=${this.handleSelectAllShown}
+                        >${msg('Select all shown')}</oscd-text-button
+                      >
+                      <oscd-text-button
+                        type="button"
+                        class="clear-selection"
+                        .disabled=${!this.hasSelection}
+                        @click=${this.handleClearSelection}
+                        >${msg('Clear selection')}</oscd-text-button
+                      >
+                    </div>
+                  `
+                : nothing}
+            </div>
+            <oscd-divider></oscd-divider>
+            ${this.items.length === 0
+              ? html`<p class="empty-selection">
+                  ${msg('This document has no IEDs.')}
+                </p>`
+              : html`
+                  <oscd-selection-list
+                    id="selection-list"
+                    multiselect
+                    .items=${this.items}
+                    .searchhelper=${msg('Search IEDs')}
+                    aria-label=${msg('IEDs in the document')}
+                    @selection-list-change=${this.handleSelectionChange}
+                    filterable
+                  ></oscd-selection-list>
+                `}
+          </div>
+          ${this.hasRemovalOptions
             ? html`
-                <div
+                <aside
                   class="removal-options"
                   aria-label=${msg('Additional removal options')}
                 >
                   ${this.renderRemovalOptions()}
-                </div>
+                </aside>
               `
             : nothing}
         </form>
@@ -568,22 +653,59 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
         max-height: 90dvh;
       }
 
+      #selection-dialog.with-options {
+        width: min(1080px, 94vw);
+        max-width: 94vw;
+      }
+
       form {
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
         height: min(600px, 70dvh);
         padding: 0;
         margin-block-end: 0;
       }
 
-      form p {
-        flex: none;
+      form.with-options {
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+      }
+
+      form .intro {
+        grid-column: 1 / -1;
         margin: 16px 24px;
       }
 
       form h3,
       form oscd-divider {
         flex: none;
+      }
+
+      .selection-pane {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        min-width: 0;
+      }
+
+      .selection-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding-inline-end: 8px;
+      }
+
+      .selection-header h3 {
+        margin: 16px;
+      }
+
+      .selection-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 4px;
       }
 
       .empty-selection {
@@ -599,15 +721,22 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
         margin: 0;
         padding: 12px 16px;
         min-height: 56px;
+        min-width: 0;
         box-sizing: border-box;
         flex: 1;
       }
 
+      .option > oscd-checkbox,
+      .option > oscd-icon {
+        flex: none;
+      }
+
       .removal-options {
-        flex: 0 1 auto;
         min-height: 0;
-        max-height: 40%;
         overflow-y: auto;
+        border-inline-start: 1px solid
+          var(--md-sys-color-outline-variant, #93a1a1);
+        padding-inline: 12px;
       }
 
       h3 {
@@ -625,11 +754,18 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
 
       .option-row {
         display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
+        flex-direction: column;
+        align-items: stretch;
         padding-inline-end: 16px;
+      }
+
+      .option-row .option {
+        flex: none;
+      }
+
+      .option-row > oscd-text-button {
+        align-self: flex-start;
+        margin-inline-start: 48px;
       }
 
       #review-dialog {
@@ -654,6 +790,22 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
         min-height: 0;
         overflow-y: auto;
         background: var(--md-sys-color-surface);
+      }
+
+      @media (max-width: 720px) {
+        form.with-options {
+          grid-template-columns: minmax(0, 1fr);
+          grid-template-rows: auto minmax(0, 1fr) auto;
+        }
+
+        .removal-options {
+          max-height: 40%;
+          border-inline-start: none;
+          border-block-start: 1px solid
+            var(--md-sys-color-outline-variant, #93a1a1);
+          padding-inline: 0;
+          padding-block-start: 8px;
+        }
       }
     `,
   ];

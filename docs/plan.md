@@ -516,6 +516,26 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
   Do not let the orchestrator build this branch before the baseline workflow
   runs.
 
+### 2026-10-20 - follow-up: options to the right and filtered bulk selection
+
+- Moved the removal options from a row below the list to a right-hand column.
+  The dialog widens to 1080 px when options exist, the right column is 300 to
+  360 px, and the whole layout stacks below 720 px.
+- Kept the IED checkbox at its natural width. The network name can wrap, and
+  the *Review SCL...* action sits below its label instead of squeezing the
+  checkbox and label.
+- Added *Select all shown* and *Clear selection*. *Select all shown* uses the
+  selection list's current search regex, so it selects exactly the items the
+  filter shows. Hidden selections are kept; *Clear selection* clears all IEDs
+  without changing the search.
+- Added tests for selecting filtered IEDs, removing only the shown IEDs, and
+  clearing a selection while the filter stays. Added the right-column and
+  narrow-stack layout tests.
+- Added the `with all filtered IEDs selected` screenshot and the
+  `filtered-selection.png` documentation link.
+- `tsc` pass, lint pass, `npm test` 25.5 s and 61 tests pass. Coverage 97.66 %.
+  `npm run test:visual` runs 12 tests and fails only because no baseline exists.
+
 ### 2026-10-20 - follow-up: removal options height
 
 - The options panel used a grid row of `0.8fr`, so it took almost half the

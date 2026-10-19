@@ -17,6 +17,21 @@ An item must match all the terms.
 * `*` matches any text.
 * `?` matches one character.
 
+[[select-shown]]
+== Select the IEDs which the search shows
+
+. Type the search text.
+. Select btn:[Select all shown].
+The button selects every IED in the filtered list.
+. Select btn:[Remove] to remove the selected IEDs.
+
+The button adds the shown IEDs to the current selection.
+It does not clear an IED which a different search selected.
+Select btn:[Clear selection] to clear every selected IED without changing the search.
+
+.The filtered list with both shown IEDs selected
+image::filtered-selection.png[The dialog with DEMO_BOUND in the search field and both matching IEDs selected.]
+
 == What the search looks at
 
 The search looks at both lines of each item:
