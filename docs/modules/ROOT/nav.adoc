@@ -4,6 +4,5 @@
 * xref:remove_ieds.adoc[]
 * xref:removal_options.adoc[]
 * xref:searching.adoc[]
-* xref:icons_and_tooltips.adoc[]
 * xref:support.adoc[]
 * xref:development.adoc[]

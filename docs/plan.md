@@ -371,7 +371,6 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
 | `remove_ieds.adoc` | Select IEDs, remove, direct vs confirmation, undo, LNode default | `ied-selected.png`, `confirmation.png` |
 | `removal_options.adoc` | Preserve/delete LNodes, delete emptied SubNetworks, delete Communication, Review SCL, schema warnings, Back/Confirm | `subnetwork-options.png`, `communication-options.png`, `scl-review.png` |
 | `searching.adoc` | Terms, case, spaces, quotes, `*`, `?`, what is searched, clear | `search.png` |
-| `icons_and_tooltips.adoc` | `delete` menu icon, `search` icon, decorative `warning` icon, accessible names | none |
 | `support.adoc` | Issues and chat links | none |
 | `development.adoc` | Node 22, `npm i`, `npm run start`, lint/test/build/bundle, `npm run test:visual`, CI baselines, package layout, release | none |
 
@@ -495,8 +494,8 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
 ### 2026-10-20 - step 8: documentation
 
 - Added the Antora component `oscd-menu-remove-ieds`: `docs/antora.yml`,
-  `nav.adoc`, `partials/base.adoc` and 9 pages (introduction, installation,
-  screen, remove, options, search, icons, support, development).
+  `nav.adoc`, `partials/base.adoc` and 8 pages (introduction, installation,
+  screen, remove, options, search, support, development).
 - Added 11 relative image symlinks in `docs/modules/ROOT/images` to the
   screenshot baselines. The links are broken until the CI baseline workflow
   creates the images; the test workflow now fails on any broken link.
@@ -508,7 +507,7 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
   is left uncommitted, as requested; the unrelated changes in that file are
   untouched.
 - Documentation check: Antora 3.2.1 parses the component, resolves every xref
-  and produces all 9 pages. The real repository build stops on the 11 broken
+  and produces all 8 pages. The real repository build stopped on the 11 broken
   image links, which is expected before CI creates the baselines. A scratch
   copy with placeholder images builds without warnings, which verifies the
   page syntax, navigation and xrefs.
