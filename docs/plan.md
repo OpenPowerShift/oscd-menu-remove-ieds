@@ -399,10 +399,9 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
 | 4 | Add `@lit/localize`, `theme.ts`, palette, host sizing, empty state, option wording; component tests | Done |
 | 5 | Fix cancel/Escape, empty-selection guard, options collapse, selection preservation, dangling separator | Done |
 | 6 | Add visual config, screenshot tests, local fonts | Done |
-| 7 | Replace CI workflows, release config, package contents, `.gitattributes`, demo; validate YAML | Planned |
-| 8 | Replace CI workflows, release config, package contents, `.gitattributes`; validate YAML | Planned |
-| 9 | Add Antora docs, image symlinks, README; update orchestrator playbook | Planned |
-| 10 | Final verification: lint, tsc, build, test, bundle, fallback, pack, legacy search, demo | Planned |
+| 7 | Replace CI workflows, release config, package contents, demo; validate YAML | Done |
+| 8 | Add Antora docs, image symlinks, README; update orchestrator playbook | Planned |
+| 9 | Final verification: lint, tsc, build, test, bundle, pack, legacy search, demo | Planned |
 
 ## 9. Worklog
 
@@ -468,6 +467,30 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
   the first set.
 - Problem found: the search `BOUND` also matches `DEMO_UNBOUND`; the screenshot
   test uses `DEMO_BOUND` instead.
+
+### 2026-10-20 - step 7: CI, release, demo and package
+
+- Replaced `test.yml` with the reference workflow: Node 22, lint, docs image
+  link check, Playwright, coverage artifact, and a visual job on pull requests
+  or `workflow_call` with `visual: true`.
+- Added `release.yml` named "Release and deploy": `test` with visual tests,
+  `release-please` with `RELEASE_PLEASE_TOKEN`, trusted npm publishing with
+  `id-token: write`, and a `deploy` job which bundles and deploys `dist`.
+- Added `update-visual-baselines.yml` and removed `deploy.yml` and
+  `test-on-pr-branch.yml`.
+- Set the release-please package name and kept the existing changelog sections.
+  Validated all three workflows with PyYAML and both JSON files with Node.
+- Fixed the demo: `oscd-shell { height: 100vh; }` only, a scoped-registry
+  `definePlugins`, the open/save/remove menu entries, no remote plugins and a
+  redirect page for the deployed root. Removed the unused 1.3 MB
+  `demo/sample2.scd`.
+- Added `rollup.config.js` which extends the shared bundle config to copy
+  `demo/index.deploy.html`.
+- `npm run bundle` passes. `npm pack --dry-run` contains only `dist`, the
+  declarations, README and LICENSE; specs, tests, demo and the deploy page are
+  excluded.
+- Problem found: the bundle also copies `index.deploy.html` into `dist/demo`;
+  the package allowlist excludes only the root copy, which is what npm needs.
 
 ### 2026-10-20 - review and branch setup
 

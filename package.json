@@ -31,7 +31,8 @@
     "!dist/**/*.spec.*",
     "!dist/**/*.test.*",
     "!dist/testing",
-    "!dist/demo"
+    "!dist/demo",
+    "!dist/index.deploy.html"
   ],
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
