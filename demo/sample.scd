@@ -6,13 +6,40 @@
      release="4">
 
   <Header id="remove-ieds-demo"/>
+  <!-- Removal scenarios (reload this file between scenarios):
+       DEMO_BOUND_A: LNode options appear; DemoStationBus still has another IED.
+       DEMO_BOUND_A + DEMO_BOUND_B: DemoStationBus loses all three ConnectedAPs;
+         DemoProcessBus retains DEMO_UNBOUND. Both IEDs share LNode specifications.
+       DEMO_UNBOUND: no LNode option; neither demo network becomes empty.
+       All three DEMO_* IEDs: both demo networks become empty; choose different
+         retain/delete options and inspect their Private metadata in Review SCL.
+       All IEDs: all three networks become empty. Selecting every network for
+         deletion reveals the separate Communication deletion option.
+       Compare unchecked/checked LNode removal, then undo/redo. Existing None
+         entries must survive, including one matching the bound specifications.
+       Deleting DEMO_BOUND_A and DEMO_BOUND_B in separate operations also checks
+         deduplication after the first removal and plugin refresh. -->
   <Substation name="S1">
     <VoltageLevel name="V1">
       <Bay name="PUB"/>
       <Bay name="SUB"/>
+      <Bay name="DEMO">
+        <ConductingEquipment name="QA1" type="CBR">
+          <LNode iedName="DEMO_BOUND_A" ldInst="DEMO" lnClass="TCTR" lnInst="1" lnType="TCTR_Test"/>
+          <LNode iedName="DEMO_BOUND_B" ldInst="DEMO" lnClass="TCTR" lnInst="1" lnType="TCTR_Test"/>
+          <LNode iedName="DEMO_BOUND_A" ldInst="DEMO" lnClass="TCTR" lnInst="2" lnType="TCTR_Test"/>
+          <LNode iedName="DEMO_BOUND_B" ldInst="DEMO" lnClass="TCTR" lnInst="2" lnType="TCTR_Test"/>
+          <LNode iedName="None" ldInst="DEMO" lnClass="TCTR" lnInst="1" lnType="TCTR_Test"/>
+          <LNode iedName="None" ldInst="DEMO" lnClass="TCTR" lnInst="3" lnType="TCTR_Test"/>
+        </ConductingEquipment>
+      </Bay>
     </VoltageLevel>
   </Substation>
   <Communication>
+    <Private type="oscd-remove-ieds-demo" xmlns:demo="urn:oscd-remove-ieds:demo">
+      <demo:Note>Communication-level engineering data: deleting Communication removes this too.</demo:Note>
+      <demo:Layout x="120" y="80"/>
+    </Private>
     <SubNetwork name="StationBus" type="8-MMS">
       <BitRate unit="b/s" multiplier="M">100</BitRate>
       <ConnectedAP iedName="PUB_A" apName="AP1">
@@ -51,7 +78,55 @@
       <ConnectedAP iedName="SUB_A" apName="AP1"/>
       <ConnectedAP iedName="SUB_B" apName="AP1"/>
     </SubNetwork>
+    <SubNetwork name="DemoStationBus" type="8-MMS" desc="Emptied by selecting both DEMO_BOUND IEDs">
+      <Private type="oscd-remove-ieds-demo" xmlns:demo="urn:oscd-remove-ieds:demo">
+        <demo:Note>DemoStationBus engineering data: retain this network to preserve this note and its layout.</demo:Note>
+        <demo:Layout x="240" y="160"/>
+      </Private>
+      <BitRate unit="b/s" multiplier="M">100</BitRate>
+      <ConnectedAP iedName="DEMO_BOUND_A" apName="AP1"/>
+      <ConnectedAP iedName="DEMO_BOUND_A" apName="AP2"/>
+      <ConnectedAP iedName="DEMO_BOUND_B" apName="AP1"/>
+    </SubNetwork>
+    <SubNetwork name="DemoProcessBus" type="8-MMS" desc="Emptied by DEMO_BOUND_B and DEMO_UNBOUND together">
+      <Private type="oscd-remove-ieds-demo" xmlns:demo="urn:oscd-remove-ieds:demo">
+        <demo:Note>DemoProcessBus engineering data: this is separate from DemoStationBus metadata.</demo:Note>
+        <demo:Layout x="480" y="160"/>
+      </Private>
+      <BitRate unit="b/s" multiplier="M">1000</BitRate>
+      <ConnectedAP iedName="DEMO_BOUND_B" apName="AP2"/>
+      <ConnectedAP iedName="DEMO_UNBOUND" apName="AP1"/>
+    </SubNetwork>
   </Communication>
+  <IED name="DEMO_BOUND_A" manufacturer="OpenSCD" desc="Bound LNodes; two access points on DemoStationBus">
+    <AccessPoint name="AP1">
+      <Server>
+        <Authentication/>
+        <LDevice inst="DEMO">
+          <LN0 lnClass="LLN0" inst="" lnType="LLN0_Test"/>
+          <LN lnClass="TCTR" inst="1" lnType="TCTR_Test"/>
+          <LN lnClass="TCTR" inst="2" lnType="TCTR_Test"/>
+        </LDevice>
+      </Server>
+    </AccessPoint>
+    <AccessPoint name="AP2"/>
+  </IED>
+  <IED name="DEMO_BOUND_B" manufacturer="OpenSCD" desc="Matching LNodes; connected to both demo networks">
+    <AccessPoint name="AP1">
+      <Server>
+        <Authentication/>
+        <LDevice inst="DEMO">
+          <LN0 lnClass="LLN0" inst="" lnType="LLN0_Test"/>
+          <LN lnClass="TCTR" inst="1" lnType="TCTR_Test"/>
+          <LN lnClass="TCTR" inst="2" lnType="TCTR_Test"/>
+        </LDevice>
+      </Server>
+    </AccessPoint>
+    <AccessPoint name="AP2"/>
+  </IED>
+  <IED name="DEMO_UNBOUND" manufacturer="OpenSCD" desc="No LNode bindings; keeps DemoProcessBus connected">
+    <AccessPoint name="AP1"/>
+  </IED>
   <IED name="PUB_A" manufacturer="OpenSCD">
     <AccessPoint name="AP1">
       <Server>

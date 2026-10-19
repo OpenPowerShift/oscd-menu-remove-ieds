@@ -1,5 +1,6 @@
-import { expect, fixture, html } from '@open-wc/testing';
+import { expect, fixture, html, waitUntil } from '@open-wc/testing';
 import { LitElement } from 'lit';
+import { setViewport } from '@web/test-runner-commands';
 
 import { XMLEditor } from '@openscd/oscd-editor';
 
@@ -7,8 +8,13 @@ import type { EditDetailV2 } from '@openscd/oscd-api';
 import type { OscdSelectionList } from '@omicronenergy/oscd-ui/selection-list/OscdSelectionList.js';
 import { OscdFilledButton } from '@omicronenergy/oscd-ui/button/OscdFilledButton.js';
 import { OscdCheckbox } from '@omicronenergy/oscd-ui/checkbox/OscdCheckbox.js';
+import { OscdAceEditor } from '@omicronenergy/oscd-ui/ace-editor/OscdAceEditor.js';
+import { OscdDialog } from '@omicronenergy/oscd-ui/dialog/OscdDialog.js';
+import { OscdIcon } from '@omicronenergy/oscd-ui/icon/OscdIcon.js';
+import { OscdTextButton } from '@omicronenergy/oscd-ui/button/OscdTextButton.js';
 import { testDocs, parseDoc } from './oscd-remove-ieds.testfiles.js';
 import OscdRemoveIEDs from './oscd-remove-ieds.js';
+import OscdRemovalConfirmation from './oscd-removal-confirmation.js';
 
 customElements.define('oscd-remove-ieds', OscdRemoveIEDs);
 
@@ -65,10 +71,11 @@ describe('oscd-remove-ieds', () => {
     });
     await plugin.updateComplete;
 
-    plugin.selectionList.items = plugin.selectionList.items.map(item => ({
-      ...item,
-      selected: true,
-    }));
+    await plugin.selectionList.updateComplete;
+    for (const item of plugin.selectionList.shadowRoot!.querySelectorAll('oscd-list-item')) {
+      item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    }
+    await plugin.updateComplete;
     await plugin.removeIEDs();
   };
 
@@ -136,13 +143,13 @@ describe('oscd-remove-ieds', () => {
       expect(pubItem!.supportingText).to.contain('1.0');
     });
 
-    it('renders a Cancel text button and a filled Remove IEDs button', () => {
+    it('renders a Cancel text button and a filled Remove button', () => {
       const buttons =
         oscdRemoveIedsPlugin.shadowRoot!.querySelectorAll('[slot="actions"] > *');
       expect(buttons[0].tagName).to.equal('OSCD-TEXT-BUTTON');
       expect(buttons[0].textContent?.trim()).to.equal('Cancel');
       expect(buttons[1]).to.be.instanceOf(OscdFilledButton);
-      expect(buttons[1].textContent?.trim()).to.equal('Remove IEDs');
+      expect(buttons[1].textContent?.trim()).to.equal('Remove');
     });
 
     it('enables removal only while IEDs are selected without clearing the selection', async () => {
@@ -151,7 +158,7 @@ describe('oscd-remove-ieds', () => {
       );
       expect(button).to.be.instanceOf(OscdFilledButton);
       if (!(button instanceof OscdFilledButton)) {
-        throw new Error('Remove IEDs button did not upgrade');
+        throw new Error('Remove button did not upgrade');
       }
       const list = oscdRemoveIedsPlugin.selectionList;
       await list.updateComplete;
@@ -344,8 +351,11 @@ describe('oscd-remove-ieds', () => {
     it('starts unchecked and disabled, and preserves selection when toggled', async () => {
       expect(removeLNodesCheckbox.checked).to.be.false;
       expect(removeLNodesCheckbox.disabled).to.be.true;
+      expect(removeLNodesCheckbox.parentElement!.hidden).to.be.true;
       await selectIED('IED1');
       expect(removeLNodesCheckbox.disabled).to.be.false;
+      expect(removeLNodesCheckbox.parentElement!.hidden).to.be.false;
+      expect(oscdRemoveIedsPlugin.selectionList.parentElement!.querySelector('.removal-options')?.contains(removeLNodesCheckbox)).to.be.true;
       const selected = oscdRemoveIedsPlugin.selectionList.selectedElements;
       await selectRemoveLNodesCheckbox();
       expect(removeLNodesCheckbox.checked).to.be.true;
@@ -440,6 +450,7 @@ describe('oscd-remove-ieds', () => {
       await deselectIED('IED1');
       expect(removeLNodesCheckbox.disabled).to.be.true;
       expect(removeLNodesCheckbox.checked).to.be.false;
+      expect(removeLNodesCheckbox.parentElement!.hidden).to.be.true;
       await deselectIED('IED2');
       expect(removeLNodesCheckbox.disabled).to.be.true;
       expect(removeLNodesCheckbox.checked).to.be.false;
@@ -456,6 +467,433 @@ describe('oscd-remove-ieds', () => {
       expect(removeLNodesCheckbox.checked).to.be.true;
       await oscdRemoveIedsPlugin.run();
       expect(removeLNodesCheckbox.checked).to.be.false;
+      await oscdRemoveIedsPlugin.dialogUI.close();
+    });
+  });
+
+  describe('communication removal choices', () => {
+    let sclEditor: XMLEditor;
+
+    const selectIEDs = async (...names: string[]) => {
+      const list = oscdRemoveIedsPlugin.selectionList;
+      await list.updateComplete;
+      for (const name of names) {
+        const index = list.items.findIndex(
+          item => item.attachedElement?.getAttribute('name') === name,
+        );
+        expect(index, `IED "${name}" must exist`).to.be.at.least(0);
+        list.shadowRoot!.querySelectorAll('oscd-list-item')[index].dispatchEvent(
+          new MouseEvent('click', { bubbles: true }),
+        );
+        await oscdRemoveIedsPlugin.updateComplete;
+      }
+    };
+
+    const selectCheckbox = async (selector: string) => {
+      const checkbox = oscdRemoveIedsPlugin.shadowRoot!.querySelector(selector);
+      if (!(checkbox instanceof OscdCheckbox)) {
+        throw new Error(`Missing checkbox: ${selector}`);
+      }
+      await checkbox.updateComplete;
+      checkbox.click();
+      await oscdRemoveIedsPlugin.updateComplete;
+      return checkbox;
+    };
+
+    const requestRemoval = async () => {
+      const button = oscdRemoveIedsPlugin.shadowRoot!.querySelector('#selection-dialog > [slot="actions"] oscd-filled-button');
+      if (!(button instanceof OscdFilledButton)) {
+        throw new Error('Missing removal button');
+      }
+      button.click();
+      const confirmation = oscdRemoveIedsPlugin.shadowRoot!.querySelector('#confirmation-dialog');
+      if (!(confirmation instanceof OscdRemovalConfirmation)) {
+        throw new Error('Missing removal confirmation');
+      }
+      await waitUntil(() => confirmation.open);
+      return confirmation;
+    };
+
+    beforeEach(async () => {
+      doc = parseDoc(testDocs.communicationChoices);
+      expect(getIedNames(doc)).to.have.members(['IED1', 'IED2', 'IED3']);
+      expect(doc.querySelectorAll('Communication > SubNetwork')).to.have.lengthOf(2);
+      expect(doc.querySelectorAll('SubNetwork[name="StationBus"] > ConnectedAP')).to.have.lengthOf(3);
+      expect(doc.querySelectorAll('SubNetwork[name="ProcessBus"] > ConnectedAP')).to.have.lengthOf(2);
+      expect(doc.querySelector('Communication > Private')).to.exist;
+      expect(doc.querySelector('SubNetwork[name="StationBus"] > Private')).to.exist;
+      docVersion = 0;
+      sclEditor = new XMLEditor();
+      oscdRemoveIedsPlugin = await fixture(
+        html`<oscd-remove-ieds .doc=${doc} .docVersion=${docVersion}></oscd-remove-ieds>`,
+      );
+      oscdRemoveIedsPlugin.addEventListener('oscd-edit-v2', (event: Event) => {
+        const { edit, title, squash } = (event as CustomEvent<EditDetailV2>).detail;
+        sclEditor.commit(edit, { title, squash });
+        oscdRemoveIedsPlugin.docVersion = ++docVersion;
+      });
+    });
+
+    it('shows only networks emptied by the combined selection, without changing the document', async () => {
+      const original = doc.cloneNode(true);
+      await selectIEDs('IED1');
+      expect(oscdRemoveIedsPlugin.shadowRoot!.querySelectorAll('.delete-network')).to.have.lengthOf(0);
+      await selectIEDs('IED2');
+      const options = oscdRemoveIedsPlugin.shadowRoot!.querySelectorAll('.delete-network');
+      expect(options).to.have.lengthOf(1);
+      expect(options[0].parentElement?.textContent).to.contain('StationBus');
+      expect(oscdRemoveIedsPlugin.shadowRoot!.querySelector('#delete-communication')).to.equal(null);
+      expect(oscdRemoveIedsPlugin.shadowRoot!.querySelector('.warning-icon')).to.exist;
+      expect(oscdRemoveIedsPlugin.shadowRoot!.querySelector('.removal-options .warning')).to.equal(null);
+      expect(doc.isEqualNode(original)).to.be.true;
+      expect(sclEditor.past).to.have.lengthOf(0);
+    });
+
+    it('keeps the choice area bounded without adding an outer dialog scrollbar', async () => {
+      await selectIEDs('IED1', 'IED2', 'IED3');
+      await oscdRemoveIedsPlugin.run();
+      const scroller = oscdRemoveIedsPlugin.dialogUI.shadowRoot!.querySelector('.scroller')!;
+      expect(scroller.scrollHeight).to.be.at.most(scroller.clientHeight + 1);
+      const optionArea = oscdRemoveIedsPlugin.shadowRoot!.querySelector('.removal-options')!;
+      expect(optionArea.clientHeight).to.be.greaterThan(0);
+      expect(optionArea.clientHeight).to.be.at.most(window.innerHeight * 0.3 + 1);
+      await oscdRemoveIedsPlugin.dialogUI.close();
+    });
+
+    it('keeps the outer dialog unscrollable on a tall viewport with a long IED list', async () => {
+      const originalSize = { width: window.innerWidth, height: window.innerHeight };
+      try {
+        await setViewport({ width: 1000, height: 1000 });
+        const list = oscdRemoveIedsPlugin.selectionList;
+        list.items = Array.from({ length: 30 }, (_, index) => ({
+          headline: `Demo IED ${index}`,
+          supportingText: 'An IED with supporting description text',
+          selected: false,
+        }));
+        await list.updateComplete;
+        await oscdRemoveIedsPlugin.run();
+        const scroller = oscdRemoveIedsPlugin.dialogUI.shadowRoot!.querySelector('.scroller')!;
+        expect(scroller.scrollHeight).to.be.at.most(scroller.clientHeight + 1);
+        expect(list.scrollHeight).to.be.greaterThan(list.clientHeight);
+        list.scrollTop = 100;
+        expect(list.scrollTop).to.be.greaterThan(0);
+        await oscdRemoveIedsPlugin.dialogUI.close();
+      } finally {
+        await setViewport(originalSize);
+      }
+    });
+
+    it('expands options once, keeps both regions stable, and resets on reopening', async () => {
+      const originalSize = { width: window.innerWidth, height: window.innerHeight };
+      try {
+        await setViewport({ width: 1000, height: 1000 });
+        await oscdRemoveIedsPlugin.run();
+        const root = oscdRemoveIedsPlugin.shadowRoot!;
+        const form = root.querySelector('form')!;
+        const panel = root.querySelector('.removal-options')!;
+        const list = oscdRemoveIedsPlugin.selectionList;
+        const settleLayout = async () => {
+          form.getBoundingClientRect();
+          await Promise.all(form.getAnimations().map(animation => animation.finished));
+        };
+        expect(panel.clientHeight).to.equal(0);
+        const initialListHeight = list.clientHeight;
+        expect(initialListHeight).to.be.greaterThan(400);
+        await selectIEDs('IED1');
+        expect(panel.clientHeight).to.equal(0);
+        await selectIEDs('IED2');
+        await settleLayout();
+        const expandedPanelHeight = panel.clientHeight;
+        const expandedListHeight = list.clientHeight;
+        expect(expandedPanelHeight).to.be.greaterThan(150);
+        expect(expandedListHeight).to.be.lessThan(initialListHeight);
+        expect(panel.querySelector('h3')?.textContent).to.equal('Removal options');
+        expect(root.querySelector('.selection-heading')?.textContent).to.equal('Select IEDs');
+        await selectIEDs('IED3');
+        await selectCheckbox('.delete-network');
+        await selectCheckbox('.option-row:nth-of-type(2) .delete-network');
+        await settleLayout();
+        expect(root.querySelector('#delete-communication')).to.exist;
+        expect(panel.clientHeight).to.equal(expandedPanelHeight);
+        expect(list.clientHeight).to.equal(expandedListHeight);
+        expect(panel.scrollHeight).to.be.at.least(panel.clientHeight);
+        const scroller = oscdRemoveIedsPlugin.dialogUI.shadowRoot!.querySelector('.scroller')!;
+        expect(scroller.scrollHeight).to.be.at.most(scroller.clientHeight + 1);
+
+        await selectIEDs('IED1', 'IED2', 'IED3');
+        await settleLayout();
+        expect(panel.textContent).to.contain('No additional removal options for this selection.');
+        expect(panel.querySelector('h3')?.textContent).to.equal('Removal options');
+        expect(panel.clientHeight).to.equal(expandedPanelHeight);
+        expect(list.clientHeight).to.equal(expandedListHeight);
+        await oscdRemoveIedsPlugin.dialogUI.close();
+        await oscdRemoveIedsPlugin.updateComplete;
+        await settleLayout();
+        await oscdRemoveIedsPlugin.run();
+        expect(panel.clientHeight).to.equal(0);
+        expect(list.clientHeight).to.equal(initialListHeight);
+        await oscdRemoveIedsPlugin.dialogUI.close();
+      } finally {
+        await setViewport(originalSize);
+      }
+    });
+
+    it('retains network metadata by default and groups the IED removals into one undo entry', async () => {
+      const original = doc.cloneNode(true);
+      const network = doc.querySelector('SubNetwork[name="StationBus"]')!;
+      const metadata = network.querySelector('Private')!;
+      const bitRate = network.querySelector('BitRate')!;
+      await selectIEDs('IED1', 'IED2');
+      await oscdRemoveIedsPlugin.removeIEDs();
+      expect(network.parentElement).to.equal(doc.querySelector('Communication'));
+      expect(network.querySelector('Private')).to.equal(metadata);
+      expect(network.querySelector('BitRate')).to.equal(bitRate);
+      expect(network.querySelectorAll('ConnectedAP')).to.have.lengthOf(0);
+      expect(getIedNames(doc)).to.deep.equal(['IED3']);
+      expect(sclEditor.past).to.have.lengthOf(1);
+      const removed = doc.cloneNode(true);
+      sclEditor.undo();
+      expect(doc.isEqualNode(original)).to.be.true;
+      sclEditor.redo();
+      expect(doc.isEqualNode(removed)).to.be.true;
+    });
+
+    it('defers edits until confirmation and preserves choices when going back', async () => {
+      const original = doc.cloneNode(true);
+      await oscdRemoveIedsPlugin.run();
+      await selectIEDs('IED1', 'IED2', 'IED3');
+      await selectCheckbox('.delete-network');
+      const confirmation = await requestRemoval();
+      expect(doc.isEqualNode(original)).to.be.true;
+      expect(sclEditor.past).to.have.lengthOf(0);
+      expect(confirmation.summary?.iedNames).to.deep.equal(['IED1', 'IED2', 'IED3']);
+      expect(confirmation.summary?.hasBoundLNodes).to.be.false;
+      expect(confirmation.summary?.deletedSubNetworks).to.deep.equal(['StationBus']);
+      expect(confirmation.summary?.retainedSubNetworks).to.deep.equal(['ProcessBus']);
+      await confirmation.close();
+      expect(oscdRemoveIedsPlugin.dialogUI.open).to.be.true;
+      expect(oscdRemoveIedsPlugin.selectionList.selectedElements).to.have.lengthOf(3);
+      const networkChoice = oscdRemoveIedsPlugin.shadowRoot!.querySelector('.delete-network');
+      expect(networkChoice instanceof OscdCheckbox && networkChoice.checked).to.be.true;
+      await requestRemoval();
+      confirmation.dispatchEvent(new CustomEvent('confirm'));
+      await waitUntil(() => doc.querySelectorAll('IED').length === 0);
+      await waitUntil(() => !oscdRemoveIedsPlugin.dialogUI.open);
+      expect(confirmation.open).to.be.false;
+      expect(doc.querySelector('SubNetwork[name="StationBus"]')).to.equal(null);
+      expect(doc.querySelector('SubNetwork[name="ProcessBus"]')).to.exist;
+      expect(sclEditor.past).to.have.lengthOf(1);
+      sclEditor.undo();
+      expect(doc.isEqualNode(original)).to.be.true;
+    });
+
+    it('removes directly when the selection has no communication impacts', async () => {
+      await oscdRemoveIedsPlugin.run();
+      await selectIEDs('IED1');
+      const button = oscdRemoveIedsPlugin.shadowRoot!.querySelector('#selection-dialog > [slot="actions"] oscd-filled-button');
+      if (!(button instanceof OscdFilledButton)) {
+        throw new Error('Missing removal button');
+      }
+      button.click();
+      await waitUntil(() => doc.querySelector('IED[name="IED1"]') === null);
+      await waitUntil(() => !oscdRemoveIedsPlugin.dialogUI.open);
+      const confirmation = oscdRemoveIedsPlugin.shadowRoot!.querySelector('#confirmation-dialog');
+      expect(confirmation instanceof OscdRemovalConfirmation && confirmation.open).to.be.false;
+    });
+
+    it('deletes only explicitly selected networks and leaves the surviving network intact', async () => {
+      const original = doc.cloneNode(true);
+      const processBus = doc.querySelector('SubNetwork[name="ProcessBus"]')!;
+      await selectIEDs('IED1', 'IED2');
+      await selectCheckbox('.delete-network');
+      await oscdRemoveIedsPlugin.removeIEDs();
+      expect(doc.querySelector('SubNetwork[name="StationBus"]')).to.equal(null);
+      expect(doc.querySelector('SubNetwork[name="ProcessBus"]')).to.equal(processBus);
+      expect(processBus.querySelectorAll('ConnectedAP')).to.have.lengthOf(1);
+      sclEditor.undo();
+      expect(doc.isEqualNode(original)).to.be.true;
+    });
+
+    it('supports mixed choices and preserves a deletion choice for a network that remains affected', async () => {
+      await selectIEDs('IED1', 'IED2');
+      await selectCheckbox('.delete-network');
+      await selectIEDs('IED3');
+      const options = oscdRemoveIedsPlugin.shadowRoot!.querySelectorAll('.delete-network');
+      expect(options).to.have.lengthOf(2);
+      expect(options[0] instanceof OscdCheckbox && options[0].checked).to.be.true;
+      expect(options[1] instanceof OscdCheckbox && options[1].checked).to.be.false;
+      const retained = doc.querySelector('SubNetwork[name="ProcessBus"]')!;
+      await oscdRemoveIedsPlugin.removeIEDs();
+      expect(doc.querySelector('SubNetwork[name="StationBus"]')).to.equal(null);
+      expect(doc.querySelector('SubNetwork[name="ProcessBus"]')).to.equal(retained);
+      expect(retained.querySelectorAll('ConnectedAP')).to.have.lengthOf(0);
+    });
+
+    it('clears all choices on cancellation without applying edits', async () => {
+      const original = doc.cloneNode(true);
+      await selectIEDs('IED1', 'IED2', 'IED3');
+      await selectCheckbox('.delete-network');
+      await selectCheckbox('.option-row:nth-of-type(2) .delete-network');
+      await selectCheckbox('#delete-communication');
+      oscdRemoveIedsPlugin.shadowRoot!.querySelector('#selection-dialog > [slot="actions"] oscd-text-button')!
+        .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await oscdRemoveIedsPlugin.updateComplete;
+      expect(doc.isEqualNode(original)).to.be.true;
+      expect(sclEditor.past).to.have.lengthOf(0);
+      expect(oscdRemoveIedsPlugin.shadowRoot!.querySelector('.delete-network')).to.equal(null);
+      expect(oscdRemoveIedsPlugin.selectionList.selectedElements).to.have.lengthOf(0);
+    });
+
+    it('progressively offers Communication deletion and resets it when a network is retained', async () => {
+      await selectIEDs('IED1', 'IED2', 'IED3');
+      const networks = oscdRemoveIedsPlugin.shadowRoot!.querySelectorAll('.delete-network');
+      expect(networks).to.have.lengthOf(2);
+      await selectCheckbox('.delete-network');
+      expect(oscdRemoveIedsPlugin.shadowRoot!.querySelector('#delete-communication')).to.equal(null);
+      await selectCheckbox('.option-row:nth-of-type(2) .delete-network');
+      const communication = oscdRemoveIedsPlugin.shadowRoot!.querySelector('#delete-communication');
+      expect(communication).to.be.instanceOf(OscdCheckbox);
+      expect(communication?.closest('.option-row')?.querySelector('.warning-icon')).to.exist;
+      await selectCheckbox('#delete-communication');
+      expect(oscdRemoveIedsPlugin.shadowRoot!.querySelector('.warning')).to.equal(null);
+      await selectCheckbox('.delete-network');
+      expect(oscdRemoveIedsPlugin.shadowRoot!.querySelector('#delete-communication')).to.equal(null);
+      await selectCheckbox('.delete-network');
+      const reset = oscdRemoveIedsPlugin.shadowRoot!.querySelector('#delete-communication');
+      expect(reset instanceof OscdCheckbox && reset.checked).to.be.false;
+    });
+
+    for (const warningToken of ['--oscd-warning', '--oscd-theme-warning']) {
+      it(`uses ${warningToken} for empty-container deletion icons`, async () => {
+        oscdRemoveIedsPlugin.style.setProperty('--oscd-theme-warning', 'initial');
+        oscdRemoveIedsPlugin.style.setProperty('--oscd-warning', 'rgb(150, 100, 0)');
+        oscdRemoveIedsPlugin.style.setProperty(warningToken, 'rgb(180, 120, 0)');
+        await selectIEDs('IED1', 'IED2', 'IED3');
+        await selectCheckbox('.delete-network');
+        await selectCheckbox('.option-row:nth-of-type(2) .delete-network');
+        const icons = oscdRemoveIedsPlugin.shadowRoot!.querySelectorAll('.warning-icon');
+        expect(icons).to.have.lengthOf(3);
+        icons.forEach((icon) => {
+          expect(icon).to.be.instanceOf(OscdIcon);
+          expect(icon.textContent).to.equal('warning');
+          expect(getComputedStyle(icon).color).to.equal('rgb(180, 120, 0)');
+        });
+      });
+    }
+
+    it('preserves empty Communication unless its deletion is explicitly chosen', async () => {
+      const communication = doc.querySelector('Communication')!;
+      const metadata = communication.querySelector(':scope > Private')!;
+      await selectIEDs('IED1', 'IED2', 'IED3');
+      await selectCheckbox('.delete-network');
+      await selectCheckbox('.option-row:nth-of-type(2) .delete-network');
+      await oscdRemoveIedsPlugin.removeIEDs();
+      expect(doc.querySelector('Communication')).to.equal(communication);
+      expect(communication.querySelector(':scope > Private')).to.equal(metadata);
+      expect(communication.querySelectorAll(':scope > SubNetwork')).to.have.lengthOf(0);
+    });
+
+    it('deletes Communication only by choice, with one undo/redo and a separate prior edit', async () => {
+      sclEditor.commit({ element: doc.documentElement, attributes: { desc: 'Earlier edit' } });
+      const original = doc.cloneNode(true);
+      await selectIEDs('IED1', 'IED2', 'IED3');
+      await selectCheckbox('.delete-network');
+      await selectCheckbox('.option-row:nth-of-type(2) .delete-network');
+      await selectCheckbox('#delete-communication');
+      await oscdRemoveIedsPlugin.removeIEDs();
+      expect(doc.querySelector('Communication')).to.equal(null);
+      expect(doc.querySelectorAll('IED')).to.have.lengthOf(0);
+      expect(sclEditor.past).to.have.lengthOf(2);
+      const removed = doc.cloneNode(true);
+      sclEditor.undo();
+      expect(doc.isEqualNode(original)).to.be.true;
+      sclEditor.redo();
+      expect(doc.isEqualNode(removed)).to.be.true;
+    });
+
+    it('drops deletion choices when a network stops being affected', async () => {
+      await selectIEDs('IED1', 'IED2');
+      await selectCheckbox('.delete-network');
+      await selectIEDs('IED2');
+      expect(oscdRemoveIedsPlugin.shadowRoot!.querySelector('.delete-network')).to.equal(null);
+      await selectIEDs('IED2');
+      const reset = oscdRemoveIedsPlugin.shadowRoot!.querySelector('.delete-network');
+      expect(reset instanceof OscdCheckbox && reset.checked).to.be.false;
+    });
+
+    it('previews complete current SCL read-only while allowing text selection and copy extraction', async () => {
+      const original = doc.cloneNode(true);
+      await selectIEDs('IED1', 'IED2');
+      await oscdRemoveIedsPlugin.run();
+      const review = oscdRemoveIedsPlugin.shadowRoot!.querySelector('.review-network');
+      if (!(review instanceof OscdTextButton)) {
+        throw new Error('Missing review button');
+      }
+      const selected = [...oscdRemoveIedsPlugin.selectionList.selectedElements];
+      const panelHeight = oscdRemoveIedsPlugin.shadowRoot!.querySelector('.removal-options')!.clientHeight;
+      review.shadowRoot!.querySelector('button')!.click();
+      await oscdRemoveIedsPlugin.updateComplete;
+      const viewer = oscdRemoveIedsPlugin.shadowRoot!.querySelector('oscd-ace-editor');
+      if (!(viewer instanceof OscdAceEditor)) {
+        throw new Error('SCL viewer did not upgrade');
+      }
+      await waitUntil(() => viewer.editor?.getReadOnly() === true);
+      const reviewDialog = oscdRemoveIedsPlugin.shadowRoot!.querySelector('#review-dialog')!;
+      expect(reviewDialog).to.be.instanceOf(OscdDialog);
+      expect(oscdRemoveIedsPlugin.dialogUI.open).to.be.true;
+      expect(reviewDialog.querySelector('[slot="headline"]')?.textContent).to.equal(
+        'Review SubNetwork "StationBus" removal',
+      );
+      await waitUntil(() => {
+        const scroller = reviewDialog.shadowRoot!.querySelector('.scroller')!;
+        return scroller.clientHeight > 0 &&
+          scroller.scrollHeight <= scroller.clientHeight + 1;
+      }, 'The review dialog should not have an outer scrolling area');
+      expect(viewer.clientHeight).to.be.greaterThan(0);
+      const ace = viewer.editor!;
+      expect(ace.getValue()).to.contain('StationBus metadata');
+      expect(ace.getValue()).to.contain('BitRate');
+      expect(ace.getValue()).to.contain('ConnectedAP');
+      const current = ace.getValue();
+      ace.selectAll();
+      expect(ace.getCopyText()).to.equal(current);
+      ace.execCommand('insertstring', 'should not change');
+      expect(ace.getValue()).to.equal(current);
+      expect(doc.isEqualNode(original)).to.be.true;
+      const close = oscdRemoveIedsPlugin.shadowRoot!.querySelector('#review-dialog [slot="actions"] oscd-text-button');
+      if (!(close instanceof OscdTextButton)) {
+        throw new Error('Missing review Close button');
+      }
+      close.click();
+      await waitUntil(() => oscdRemoveIedsPlugin.shadowRoot!.querySelector('oscd-ace-editor') === null);
+      expect(oscdRemoveIedsPlugin.dialogUI.open).to.be.true;
+      expect(oscdRemoveIedsPlugin.selectionList.selectedElements).to.deep.equal(selected);
+      expect(oscdRemoveIedsPlugin.shadowRoot!.querySelector('.removal-options')!.clientHeight).to.equal(panelHeight);
+      await selectIEDs('IED3');
+      await selectCheckbox('.delete-network');
+      await selectCheckbox('.option-row:nth-of-type(2) .delete-network');
+      oscdRemoveIedsPlugin.shadowRoot!.querySelector('#review-communication')!
+        .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await oscdRemoveIedsPlugin.updateComplete;
+      const communicationViewer = oscdRemoveIedsPlugin.shadowRoot!.querySelector('oscd-ace-editor');
+      if (!(communicationViewer instanceof OscdAceEditor)) {
+        throw new Error('Communication viewer did not upgrade');
+      }
+      await waitUntil(() => communicationViewer.editor?.getReadOnly() === true);
+      expect(reviewDialog.querySelector('[slot="headline"]')?.textContent).to.equal(
+        'Review Communication removal',
+      );
+      await waitUntil(() => {
+        const scroller = reviewDialog.shadowRoot!.querySelector('.scroller')!;
+        return scroller.clientHeight > 0 &&
+          scroller.scrollHeight <= scroller.clientHeight + 1;
+      }, 'The Communication review should not have an outer scrolling area');
+      expect(communicationViewer.editor!.getValue()).to.contain('Communication metadata');
+      expect(communicationViewer.editor!.getValue()).to.contain('StationBus metadata');
+      expect(communicationViewer.editor!.getValue()).to.contain('ProcessBus');
+      expect(doc.isEqualNode(original)).to.be.true;
+      oscdRemoveIedsPlugin.shadowRoot!.querySelector('#review-dialog [slot="actions"] oscd-text-button')!
+        .dispatchEvent(new MouseEvent('click', { bubbles: true }));
       await oscdRemoveIedsPlugin.dialogUI.close();
     });
   });
@@ -479,6 +917,14 @@ describe('oscd-remove-ieds', () => {
       expect(sclDoc.querySelectorAll('ConnectedAP').length).to.equal(0);
     });
 
+    it('retains the empty SubNetwork and its metadata unless deletion is chosen', async () => {
+      const network = sclDoc.querySelector('SubNetwork')!;
+      const bitRate = network.querySelector('BitRate')!;
+      await selectAndRemoveAllIEDs(sclDoc);
+      expect(sclDoc.querySelector('SubNetwork')).to.equal(network);
+      expect(network.querySelector('BitRate')).to.equal(bitRate);
+      expect(network.querySelectorAll('ConnectedAP')).to.have.lengthOf(0);
+    });
   });
 
   describe('SCL validity: duplicate LNodes after removing IEDs', () => {

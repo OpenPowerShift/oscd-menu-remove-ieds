@@ -47,7 +47,7 @@
     "@omicronenergy/oscd-menu-open": "^0.0.6",
     "@omicronenergy/oscd-menu-save": "^0.0.2",
     "@omicronenergy/oscd-shell": "^0.0.18",
-    "@omicronenergy/oscd-ui": "^0.1.1",
+    "@omicronenergy/oscd-ui": "^0.1.2",
     "@open-wc/scoped-elements": "^3.0.10",
     "@openscd/oscd-api": "^0.1.6",
     "@openscd/scl-lib": "^2.0.1",

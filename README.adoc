@@ -14,11 +14,11 @@
 :uri-openscd-core-app: https://openscd.github.io/open-scd/
 :uri-openscd-core-plugin: pass:v[https://openscd.github.io/open-scd/?plugins=%7B%22menu%22:%5B%7B%22name%22:%22Open%20File%22,%22translations%22:%7B%22de%22:%22Datei%20%C3%B6ffnen%22%7D,%22icon%22:%22folder_open%22,%22active%22:true,%22src%22:%22https://openscd.github.io/oscd-open/oscd-open.js%22%7D,%7B%22name%22:%22Save%20File%22,%22translations%22:%7B%22de%22:%22Datei%20speichern%22%7D,%22icon%22:%22save%22,%22active%22:true,%22src%22:%22https://openscd.github.io/oscd-save/oscd-save.js%22%7D,%7B%22name%22:%22Remove%20IEDs%22,%22icon%22:%22delete%22,%22active%22:true,%22requireDoc%22:true,%22src%22:%22https://danyill.github.io/oscd-remove-ieds/oscd-remove-ieds.js%22%7D%5D%7D]
 // TIP:
-// the above URI is done by taking the plugins object from demo.html and updating to 
+// the above URI is done by taking the plugins object from demo.html and updating to
 // the correct {uri-ci-bundle} value and then in the browser calling:
-// 
+//
 //   console.log(`https://openscd.github.io/open-scd/?plugins=${encodeURI(JSON.stringify(plugins))}`)
-// 
+//
 // Don't forget the last bracket in the attribute definition.
 :uri-openwc: https://github.com/open-wc/open-wc
 :uri-plugin: https://github.com/danyill/oscd-remove-ieds
@@ -54,12 +54,26 @@ Feel free to log issues to request fixes, improvements or new features.
 
 == How to use?
 
-Select the IEDs to remove, then choose *Remove IEDs*. By default, associated
-LNodes are preserved with `iedName="None"`; matching duplicates are removed.
-Check *Remove associated LNodes* to delete these LNodes instead.
-The option is enabled when at least one selected IED has public LNode bindings
-in the substation model. It resets to unchecked whenever the dialog opens or
-the selection no longer includes any bound IEDs.
+Select IEDs and choose *Remove*. Associated LNodes are preserved with
+`iedName="None"` by default, with matching duplicates removed. Check
+*Remove associated LNodes* to delete them instead. This option appears when a
+selected IED has public LNode bindings and resets when the dialog opens or no
+bound IEDs remain selected.
+
+Additional removal options appear in a lower panel that expands when needed and
+stays open until the dialog closes; options scroll within it. The transition
+respects reduced-motion preferences.
+
+If removal leaves a SubNetwork without ConnectedAPs, the user is presented with the option to
+remove the SubNetwork (risking data loss) or keep it (causing a schema violation). If this also empties the Communication section, the user is
+presented with an additional option to delete that too; otherwise it remains schema-invalid.
+User can view the affected SCL by clicking on the *Review SCL...* button next to each option/checkbox they're presented.
+
+If the user was presented with additional options to remove sections, clicking "Remove" popups up a Confirmation dialog, which lists affected IEDs,
+LNode handling, and lists out what sections will be deleted or retained. User can *Confirm* to apply thos changes or
+*Back* to return and refine their choices.
+Removing IEDs which don't result in empty sections do not need confirmation.
+All resulting edits squashed into one, meaning a single undo restores all IED and changes to other sections.
 
 NOTE: The distribution instructions below require a host that handles `oscd-edit-v2` events and supplies the current `doc` and reactive `docVersion` properties. Older hosts that only supply `editCount` need updating. No action-translation plugin is required for an EditV2-compatible host.
 
@@ -122,7 +136,7 @@ image::screenshot-add-extension.png[width=300]
 
 ==== Within the current OpenSCD distribution
 
-. Within the current OpenSCD distribution, plugins are stored in the `public/js/plugins.js` folder. 
+. Within the current OpenSCD distribution, plugins are stored in the `public/js/plugins.js` folder.
 Each plugin appears in the following form:
 +
 [source,js,subs=+attributes]
@@ -138,14 +152,14 @@ Each plugin appears in the following form:
   }
 ----
 <.> Name of the plugin which appears in the menu
-<.> URL which can be a local or remote resource. 
-For a local resource, begins without a forward slash, e.g. `plugins/oscd-remove-ieds/dist/oscd-remove-ieds.js`. 
+<.> URL which can be a local or remote resource.
+For a local resource, begins without a forward slash, e.g. `plugins/oscd-remove-ieds/dist/oscd-remove-ieds.js`.
 In this case what is shown is loading a plugin from the build process.
 <.> A material icon, see others at {uri-material-icons}[Material Symbols and Icons]
 <.> Whether the plugin is enabled by default or has to be enabled in the plugins menu
 <.> The type of plugin, either `menu` or `editor`. This is a `menu` plugin.
 <.> Whether a document must be loaded for this plugin to be available
-<.> A string, either `top`, `middle` or `bottom` to give a location in the menu. 
+<.> A string, either `top`, `middle` or `bottom` to give a location in the menu.
 Otherwise inferred from the order in the file relative to other plugins.
 
 . You need to copy an entry like the above, ensure the `src` URL resolves and the plugin should be loaded when the distribution is built.
@@ -162,9 +176,9 @@ Within an OpenSCD core distribution, plugins are also loaded from a json file wi
 ----
 <open-scd
   plugins='{
-  "menu": 
+  "menu":
   [
-    {"name": "Open File", "translations": {"de": "Datei öffnen"}, "icon": "folder_open", "active": true, "src": "https://openscd.github.io/oscd-open/oscd-open.js"}, 
+    {"name": "Open File", "translations": {"de": "Datei öffnen"}, "icon": "folder_open", "active": true, "src": "https://openscd.github.io/oscd-open/oscd-open.js"},
     {"name": "Save File", "translations": {"de": "Datei speichern"}, "icon": "save", "active": true, "src": "https://openscd.github.io/oscd-save/oscd-save.js"},
     {"name": "Remove IEDs", "icon": "delete", "active": true, "requireDoc": true, "src": "/plugins/oscd-remove-ieds/dist/oscd-remove-ieds.js"}
   ]
@@ -188,8 +202,8 @@ Within an OpenSCD core distribution, plugins are also loaded from a json file wi
 <.> A material icon, see others at {uri-material-icons}[Material Symbols and Icons]
 <.> Whether the plugin is enabled by default or has to be enabled in the plugins menu
 <.> Whether a document must be loaded for this plugin to be available
-<.> URL which can be a local or remote resource. 
-For a local resource, begins without a forward slash, e.g. `plugins/oscd-remove-ieds/dist/oscd-remove-ieds.js`. 
+<.> URL which can be a local or remote resource.
+For a local resource, begins without a forward slash, e.g. `plugins/oscd-remove-ieds/dist/oscd-remove-ieds.js`.
 In this case what is shown is loading a plugin from the internet using the continuous integration build process.
 
 . You need to copy an entry like the above, ensure the `src` URL resolves and the plugin should be loaded when the distribution is built.
@@ -220,8 +234,8 @@ Now that you have Node.js installed, you can install this plugin.
 
 === Cloning and Demo Server
 
-TIP: This repository uses Git LFS so ensure this is is installed on your system prior 
-(on Debian based systems `sudo apt install git-lfs`). 
+TIP: This repository uses Git LFS so ensure this is is installed on your system prior
+(on Debian based systems `sudo apt install git-lfs`).
 Then clone this repository using:
 
 [subs=+attributes]
@@ -231,7 +245,7 @@ Now, install dependencies
 
  $ npm i
 
-Start up a demo server 
+Start up a demo server
 
  $ npm run start
 
