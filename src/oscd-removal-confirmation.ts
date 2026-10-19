@@ -6,15 +6,9 @@ import { OscdTextButton } from '@omicronenergy/oscd-ui/button/OscdTextButton.js'
 import { OscdFilledButton } from '@omicronenergy/oscd-ui/button/OscdFilledButton.js';
 import { OscdIcon } from '@omicronenergy/oscd-ui/icon/OscdIcon.js';
 
-export interface RemovalSummary {
-  iedNames: string[];
-  hasBoundLNodes: boolean;
-  preserveLNodes: boolean;
-  deletedSubNetworks: string[];
-  retainedSubNetworks: string[];
-  deleteCommunication: boolean;
-  retainCommunication: boolean;
-}
+import type { RemovalSummary } from './foundation/removal-plan.js';
+
+export type { RemovalSummary };
 
 export default class OscdRemovalConfirmation extends ScopedElementsMixin(LitElement) {
   static scopedElements = {

@@ -394,8 +394,8 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
 |---|---|---|
 | 0 | Review current state, create `upgrade`, write this plan | Done (`5c2c33e`) |
 | 1 | Fix the lockfile, remove `.husky`, install tooling hooks; rename package/entry/component; verify `npm ci`, `tsc`, lint, build, test | Done (`c30da4b`) |
-| 2 | Rename package/entry/component if Q1 approves; move demo deps to dev; add `files` | Planned |
-| 3 | Extract `foundation/ied-description.ts` and `foundation/removal-plan.ts`; unit tests | Planned |
+| 2 | Extract `foundation/ied-description.ts` and `foundation/removal-plan.ts`; unit tests | Done |
+| 3 | Add `src/testing/` plugin/driver/fixtures; rewrite specs; fix WebKit timeouts and warning assertion | Planned |
 | 4 | Add `src/testing/` plugin/driver/fixtures; rewrite specs; fix WebKit timeouts and warning assertion | Planned |
 | 5 | Add `@lit/localize`, `theme.ts`, palette, host sizing, empty state, card/option wording; component tests | Planned |
 | 6 | Fix cancel/Escape, empty-selection guard, options collapse, dangling separator | Planned |
@@ -405,6 +405,28 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
 | 10 | Final verification: lint, tsc, build, test, bundle, fallback, pack, legacy search, demo | Planned |
 
 ## 9. Worklog
+
+### 2026-10-20 - review and branch setup
+
+- Created `upgrade` from
+  `fix_removing-ieds-resulting-in-duplicate-entries` at `9453c30`. No commit
+  yet; `main` untouched.
+- Ran `npm ci`: failed in `prepare` because `core.hooksPath=.husky`.
+- Ran `npx tsc --noEmit`: failed with 20+ errors because
+  `@omicronenergy/oscd-material-web-base` is a dangling `file:` link in the
+  lockfile.
+- Temporarily installed `@omicronenergy/oscd-material-web-base@2.5.1` with
+  `--no-save` (no tracked file changed). Then `tsc`, `lint` and `build` passed.
+- Ran `npm test`: 27.1 s, 55 tests, 6 browser failures from 4 distinct tests
+  (one wrong warning-colour expectation in all three browsers and three WebKit
+  2 s timeouts), coverage 98.37 % inflated by the testfiles module.
+- Read `removeIED` in scl-lib and the Ed2.1 schema; confirmed that
+  `SubNetwork` needs at least one `ConnectedAP` and `Communication` needs at
+  least one `SubNetwork`, and that LNode uniqueness is per immediate container.
+- Reviewed the reference repository's tooling, CI, testing, screenshots and
+  Antora layout. Reviewed the target repository PR #2 and confirmed its head is
+  this branch.
+- No implementation started; waiting for approval and answers to Q1-Q4.
 
 ### 2026-10-20 - approval
 
@@ -436,27 +458,25 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
 - Problem found: `npm ci` still runs `prepare`, so a broken hooks path blocks
   installation and `npm pack`; verify this before trusting a result.
 
-### 2026-10-20 - review and branch setup
+### 2026-10-20 - step 2: foundation extraction
 
-- Created `upgrade` from
-  `fix_removing-ieds-resulting-in-duplicate-entries` at `9453c30`. No commit
-  yet; `main` untouched.
-- Ran `npm ci`: failed in `prepare` because `core.hooksPath=.husky`.
-- Ran `npx tsc --noEmit`: failed with 20+ errors because
-  `@omicronenergy/oscd-material-web-base` is a dangling `file:` link in the
-  lockfile.
-- Temporarily installed `@omicronenergy/oscd-material-web-base@2.5.1` with
-  `--no-save` (no tracked file changed). Then `tsc`, `lint` and `build` passed.
-- Ran `npm test`: 27.1 s, 55 tests, 6 browser failures from 4 distinct tests
-  (one wrong warning-colour expectation in all three browsers and three WebKit
-  2 s timeouts), coverage 98.37 % inflated by the testfiles module.
-- Read `removeIED` in scl-lib and the Ed2.1 schema; confirmed that
-  `SubNetwork` needs at least one `ConnectedAP` and `Communication` needs at
-  least one `SubNetwork`, and that LNode uniqueness is per immediate container.
-- Reviewed the reference repository's tooling, CI, testing, screenshots and
-  Antora layout. Reviewed the target repository PR #2 and confirmed its head is
-  this branch.
-- No implementation started; waiting for approval and answers to Q1-Q4.
+- Added `foundation/ied-description.ts` with `getIedDescription` and
+  `getIedHeadline`, and 5 unit tests. This fixed the dangling ` — ` separator
+  for IEDs without manufacturer/type (L6).
+- Added `foundation/removal-plan.ts` with `iedRemovalEdits`,
+  `sectionRemovalEdits`, `wouldEmptyCommunication` and `removalSummary`, and
+  9 unit tests. The root component now dispatches these edits instead of
+  building the summary and section edit inline.
+- Moved the `RemovalSummary` type into the foundation module and re-exported it
+  from the confirmation component.
+- Found and fixed a second label bug: `getIedDescription` joined a missing
+  schema edition as an empty string, producing `Publisher - `.
+- Raised the WebKit test timeout to 10 s in `web-test-runner.config.js`
+  temporarily; the full test-helper rewrite in step 3 makes the waits
+  event-driven.
+- Commands: `tsc` pass, lint pass, build pass, `npm test` 23 s and all 68 tests
+  pass in Chromium, Firefox and WebKit. Coverage 98.67 % (still includes the
+  testfiles module).
 
 Repeatable checklist for a similar plugin:
 

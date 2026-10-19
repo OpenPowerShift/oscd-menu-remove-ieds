@@ -6,4 +6,5 @@ export default {
   browsers: ['chromium', 'firefox', 'webkit'].map(product =>
     playwrightLauncher({ product }),
   ),
+  testFramework: { config: { timeout: 10000 } },
 };

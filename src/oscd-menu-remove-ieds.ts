@@ -14,54 +14,20 @@ import {
   type SelectItem,
 } from '@omicronenergy/oscd-ui/selection-list/OscdSelectionList.js';
 
-import { isPublic, removeIED } from '@openscd/scl-lib';
+import { isPublic } from '@openscd/scl-lib';
 import { newEditEventV2 } from '@openscd/oscd-api/utils.js';
 
+import { getIedDescription, getIedHeadline } from './foundation/ied-description.js';
 import { checkForEmptyCommunicationContainers } from './foundation/removal-checks.js';
+import {
+  iedRemovalEdits,
+  removalSummary,
+  sectionRemovalEdits,
+  wouldEmptyCommunication,
+} from './foundation/removal-plan.js';
 import OscdRemovalConfirmation from './oscd-removal-confirmation.js';
 
-import type { RemovalSummary } from './oscd-removal-confirmation.js';
-
-function getIedDescription(ied: Element): {
-  firstLine: string;
-  secondLine: string;
-} {
-  const [
-    manufacturer,
-    type,
-    desc,
-    configVersion,
-    originalSclVersion,
-    originalSclRevision,
-    originalSclRelease,
-  ] = [
-    'manufacturer',
-    'type',
-    'desc',
-    'configVersion',
-    'originalSclVersion',
-    'originalSclRevision',
-    'originalSclRelease',
-  ].map(attr => ied?.getAttribute(attr));
-
-  const firstLine = [manufacturer, type]
-    .filter(val => val !== null)
-    .join(' - ');
-
-  const schemaInformation = [
-    originalSclVersion,
-    originalSclRevision,
-    originalSclRelease,
-  ]
-    .filter(val => val !== null)
-    .join('');
-
-  const secondLine = [desc, configVersion, schemaInformation]
-    .filter(val => val !== null)
-    .join(' - ');
-
-  return { firstLine, secondLine };
-}
+import type { RemovalSummary } from './foundation/removal-plan.js';
 
 /** A menu plugin to remove IEDs from SCL files */
 export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) {
@@ -140,9 +106,9 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
       );
       this.items = Array.from(this.doc?.querySelectorAll('IED') ?? []).map(
         (ied) => {
-          const { firstLine, secondLine } = getIedDescription(ied);
+          const { secondLine } = getIedDescription(ied);
           return {
-            headline: `${ied.getAttribute('name')!} — ${firstLine}`,
+            headline: getIedHeadline(ied),
             supportingText: secondLine,
             attachedElement: ied,
             selected: false,
@@ -174,7 +140,7 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
     this.deletedSubNetworks = new Set(
       impact.subNetworks.filter(network => this.deletedSubNetworks.has(network)),
     );
-    if (!this.wouldEmptyCommunication) {
+    if (!this.emptiesCommunication) {
       this.deleteCommunication = false;
     }
   }
@@ -195,7 +161,7 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
       deleted.delete(network);
     }
     this.deletedSubNetworks = deleted;
-    if (!this.wouldEmptyCommunication) {
+    if (!this.emptiesCommunication) {
       this.deleteCommunication = false;
     }
   }
@@ -227,17 +193,15 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
       await this.removeIEDs();
       return;
     }
-    this.confirmationSummary = {
-      iedNames: this.selectionList.selectedElements.map(ied => ied.getAttribute('name') ?? ''),
+    this.confirmationSummary = removalSummary({
+      ieds: this.selectionList.selectedElements,
       hasBoundLNodes: this.hasBoundLNodes,
       preserveLNodes: this.preserveLNodes,
-      deletedSubNetworks: [...this.deletedSubNetworks].map(network => network.getAttribute('name') ?? ''),
-      retainedSubNetworks: this.affectedSubNetworks
-        .filter(network => !this.deletedSubNetworks.has(network))
-        .map(network => network.getAttribute('name') ?? ''),
-      deleteCommunication: this.wouldEmptyCommunication && this.deleteCommunication,
-      retainCommunication: this.wouldEmptyCommunication && !this.deleteCommunication,
-    };
+      communication: this.affectedCommunication,
+      affectedSubNetworks: this.affectedSubNetworks,
+      deletedSubNetworks: this.deletedSubNetworks,
+      deleteCommunication: this.deleteCommunication,
+    });
     await this.updateComplete;
     await this.confirmationDialog.show();
   }
@@ -247,10 +211,12 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
     await this.removeIEDs();
   }
 
-  private get wouldEmptyCommunication(): boolean {
-    return this.affectedCommunication !== null &&
-      this.affectedSubNetworks.length > 0 &&
-      this.affectedSubNetworks.every(network => this.deletedSubNetworks.has(network));
+  private get emptiesCommunication(): boolean {
+    return wouldEmptyCommunication(
+      this.affectedCommunication,
+      this.affectedSubNetworks,
+      this.deletedSubNetworks,
+    );
   }
 
   private resetRemovalChecks(): void {
@@ -270,14 +236,14 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
     const ieds = this.selectionList.selectedElements;
     const preserveLNodes = this.preserveLNodes;
     const deleted = [...this.deletedSubNetworks];
-    const communication = this.wouldEmptyCommunication && this.deleteCommunication
+    const communication = this.emptiesCommunication && this.deleteCommunication
       ? this.affectedCommunication
       : null;
     let squash = false;
 
     for (const ied of ieds) {
       this.dispatchEvent(
-        newEditEventV2(removeIED({ node: ied }, { preserveLNodes }), {
+        newEditEventV2(iedRemovalEdits(ied, preserveLNodes), {
           title: 'Remove IEDs',
           squash,
         }),
@@ -285,12 +251,12 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
       squash = true;
     }
     if (deleted.length > 0) {
-      this.dispatchEvent(newEditEventV2(
-        communication !== null
-          ? { node: communication }
-          : deleted.map(node => ({ node })),
-        { title: 'Remove IEDs', squash },
-      ));
+      this.dispatchEvent(
+        newEditEventV2(sectionRemovalEdits(communication, deleted), {
+          title: 'Remove IEDs',
+          squash,
+        }),
+      );
     }
 
     this.clearSelection();
@@ -342,7 +308,7 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
               >Review SCL...</oscd-text-button>
             </div>
           `)}
-          ${this.wouldEmptyCommunication ? html`
+          ${this.emptiesCommunication ? html`
             <div class="option-row">
               <label class="option">
                 <oscd-checkbox
