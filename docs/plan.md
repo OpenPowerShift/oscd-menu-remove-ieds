@@ -395,7 +395,7 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
 | 0 | Review current state, create `upgrade`, write this plan | Done (`5c2c33e`) |
 | 1 | Fix the lockfile, remove `.husky`, install tooling hooks; rename package/entry/component; verify `npm ci`, `tsc`, lint, build, test | Done (`c30da4b`) |
 | 2 | Extract `foundation/ied-description.ts` and `foundation/removal-plan.ts`; unit tests | Done |
-| 3 | Add `src/testing/` plugin/driver/fixtures; rewrite specs; fix WebKit timeouts and warning assertion | Planned |
+| 3 | Add `src/testing/` plugin/driver/fixtures; rewrite specs; fix WebKit timeouts and warning assertion | In progress (helpers and fixtures added) |
 | 4 | Add `src/testing/` plugin/driver/fixtures; rewrite specs; fix WebKit timeouts and warning assertion | Planned |
 | 5 | Add `@lit/localize`, `theme.ts`, palette, host sizing, empty state, card/option wording; component tests | Planned |
 | 6 | Fix cancel/Escape, empty-selection guard, options collapse, dangling separator | Planned |
@@ -405,6 +405,20 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
 | 10 | Final verification: lint, tsc, build, test, bundle, fallback, pack, legacy search, demo | Planned |
 
 ## 9. Worklog
+
+### 2026-10-20 - step 3a: test helpers and fixtures
+
+- Added `src/testing/plugin.ts` (mounts the plugin in a sized host, applies
+  every `oscd-edit-v2` through an `XMLEditor`, bumps `docVersion`, exposes
+  `undo`/`redo`), `driver.ts` (the only DOM-aware test file),
+  `fixtures.ts` and `dom.ts`.
+- Moved the six inline SCL documents out of the source into
+  `test/fixtures/*.scd`, so they are not compiled into the published package.
+- Added the `src/testing/**` ESLint override for dev-dependency imports and
+  used `oscd lint --format` on the new files only.
+- Commands: `tsc` pass, lint pass, `npm test` 24 s and all 68 existing tests
+  still pass. The old spec still uses internals; the rewrite follows the UI
+  changes so the strings and structure are final.
 
 ### 2026-10-20 - review and branch setup
 
