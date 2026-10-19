@@ -43,9 +43,11 @@ const visualRegression = visualRegressionPlugin({
 
 export default {
   ...base,
-  browsers: ['chromium', 'firefox', 'webkit'].map(product =>
-    playwrightLauncher({ product }),
-  ),
+  // CI installs Chromium only. Use BROWSERS=chromium,firefox,webkit locally
+  // to check all three engines.
+  browsers: (process.env.BROWSERS ?? 'chromium')
+    .split(',')
+    .map(product => playwrightLauncher({ product })),
   coverageConfig: {
     ...base.coverageConfig,
     include: ['dist/**/*.js'],

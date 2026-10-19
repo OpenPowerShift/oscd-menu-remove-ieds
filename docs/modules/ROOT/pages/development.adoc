@@ -43,7 +43,8 @@ It loads `demo/sample.scd` and the Open and Save menu plugins.
 |Build the plugin bundle and the demo.
 
 |`npm test`
-|Run the unit and component tests with coverage.
+|Run the unit and component tests with coverage in Chromium.
+Use `BROWSERS=chromium,firefox,webkit npm test` to check all three engines.
 
 |`npm run test:watch`
 |Run the tests in watch mode.
