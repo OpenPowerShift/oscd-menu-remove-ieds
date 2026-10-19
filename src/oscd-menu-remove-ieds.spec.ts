@@ -154,6 +154,30 @@ describe('oscd-menu-remove-ieds', () => {
       expect(driver.ieds().filter(item => item.selected)).to.have.lengthOf(1);
     });
 
+    it('uses only the height its options need', async () => {
+      await mount('duplicate-lnodes.scd');
+      await driver.open();
+      await driver.select('IED1');
+
+      const { form, options, list } = driver.layout();
+      expect(options).to.be.greaterThan(0);
+      expect(options).to.be.lessThan(form * 0.3);
+      expect(list).to.be.greaterThan(form * 0.35);
+    });
+
+    it('caps a long options panel and scrolls inside it', async () => {
+      await mount('communication-choices.scd');
+      await driver.open();
+      await driver.select('IED1', 'IED2', 'IED3');
+      await driver.clickOption('StationBus');
+      await driver.clickOption('ProcessBus');
+
+      const { form, options, list } = driver.layout();
+      expect(options).to.be.at.most(form * 0.4 + 1);
+      expect(options).to.be.greaterThan(0);
+      expect(list).to.be.greaterThan(0);
+    });
+
     it('is absent for an IED without bound LNodes', async () => {
       await mount('communication-choices.scd');
       await driver.open();

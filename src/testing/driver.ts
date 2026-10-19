@@ -211,6 +211,18 @@ export class PluginDriver {
     );
   }
 
+  /** The heights of the form, the options panel and the list. */
+  layout(): { form: number; options: number; list: number } {
+    const form = this.root.querySelector('form');
+    const options = this.root.querySelector('.removal-options');
+    const list = this.root.querySelector('#selection-list');
+    return {
+      form: form?.clientHeight ?? 0,
+      options: options?.clientHeight ?? 0,
+      list: list?.clientHeight ?? 0,
+    };
+  }
+
   /** The options panel heading, or an empty string when it is collapsed. */
   optionsHeading(): string {
     return normalize(

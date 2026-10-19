@@ -516,6 +516,16 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
   Do not let the orchestrator build this branch before the baseline workflow
   runs.
 
+### 2026-10-20 - follow-up: removal options height
+
+- The options panel used a grid row of `0.8fr`, so it took almost half the
+  form even when it held one checkbox. Replaced the grid with a flex column.
+- The panel now sizes to its content, has `max-height: 40%` and scrolls only
+  when the options exceed that height. The IED list takes the remaining space.
+- Added two layout tests: one option uses less than 30 % of the form, and a
+  longer panel stays within 40 % of the form with the list still visible.
+- `tsc` pass, lint pass, `npm test` 23.7 s and 59 tests pass. Coverage 97.39 %.
+
 ### 2026-10-20 - step 9: final verification
 
 - `npm ci` passes, including the generated `.githooks`.

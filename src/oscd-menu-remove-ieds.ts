@@ -81,9 +81,6 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
   private reviewElement: Element | null = null;
 
   @state()
-  private optionsExpanded = false;
-
-  @state()
   private confirmationSummary: RemovalSummary | null = null;
 
   @query('#selection-dialog')
@@ -157,7 +154,6 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
   }
 
   private handleDialogClosed(): void {
-    this.optionsExpanded = false;
     this.clearSelection();
   }
 
@@ -251,8 +247,6 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
     const impact = checkForEmptyCommunicationContainers(this.doc, selected);
     this.affectedSubNetworks = impact.subNetworks;
     this.affectedCommunication = impact.communication;
-    this.optionsExpanded =
-      this.hasBoundLNodes || this.affectedSubNetworks.length > 0;
     this.deletedSubNetworks = new Set(
       Array.from(this.deletedSubNetworks).filter(network =>
         this.affectedSubNetworks.includes(network),
@@ -267,7 +261,6 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
     this.hasSelection = false;
     this.hasBoundLNodes = false;
     this.preserveLNodes = true;
-    this.optionsExpanded = false;
     this.resetRemovalChecks();
   }
 
@@ -477,12 +470,7 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
         @closed=${this.handleDialogClosed}
       >
         <div slot="headline">${msg('Remove IEDs')}</div>
-        <form
-          slot="content"
-          id="selection"
-          method="dialog"
-          class=${this.optionsExpanded ? 'options-expanded' : ''}
-        >
+        <form slot="content" id="selection" method="dialog">
           <p>
             ${msg(
               'Select the IEDs to remove from this SCL document. By default, associated LNodes are preserved with iedName="None", merging duplicates.',
@@ -506,13 +494,16 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
                 ></oscd-selection-list>
               `}
           <oscd-divider></oscd-divider>
-          <div
-            class="removal-options"
-            ?inert=${!this.optionsExpanded}
-            aria-label=${msg('Additional removal options')}
-          >
-            ${this.renderRemovalOptions()}
-          </div>
+          ${this.hasBoundLNodes || this.affectedSubNetworks.length > 0
+            ? html`
+                <div
+                  class="removal-options"
+                  aria-label=${msg('Additional removal options')}
+                >
+                  ${this.renderRemovalOptions()}
+                </div>
+              `
+            : nothing}
         </form>
         <div slot="actions">
           <oscd-text-button
@@ -578,23 +569,26 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
       }
 
       form {
-        display: grid;
-        grid-template-rows: auto auto auto minmax(0, 1fr) auto minmax(0, 0fr);
+        display: flex;
+        flex-direction: column;
         height: min(600px, 70dvh);
         padding: 0;
         margin-block-end: 0;
-        transition: grid-template-rows 180ms ease-out;
-      }
-
-      form.options-expanded {
-        grid-template-rows: auto auto auto minmax(0, 1fr) auto minmax(0, 0.8fr);
       }
 
       form p {
+        flex: none;
         margin: 16px 24px;
       }
 
+      form h3,
+      form oscd-divider {
+        flex: none;
+      }
+
       .empty-selection {
+        flex: 1 1 auto;
+        overflow-y: auto;
         margin: 24px;
       }
 
@@ -610,7 +604,9 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
       }
 
       .removal-options {
+        flex: 0 1 auto;
         min-height: 0;
+        max-height: 40%;
         overflow-y: auto;
       }
 
@@ -654,15 +650,10 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
 
       #selection-list {
         display: block;
+        flex: 1 1 auto;
         min-height: 0;
         overflow-y: auto;
         background: var(--md-sys-color-surface);
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        form {
-          transition: none;
-        }
       }
     `,
   ];
