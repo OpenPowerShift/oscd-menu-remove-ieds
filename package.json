@@ -73,6 +73,8 @@
     "@web/test-runner-playwright": "^0.11.1",
     "@web/test-runner-visual-regression": "^0.10.0",
     "@webcomponents/scoped-custom-element-registry": "^0.0.10",
+    "pixelmatch": "^8.0.0",
+    "pngjs": "^7.0.0",
     "rollup-plugin-copy": "^3.5.0"
   }
 }

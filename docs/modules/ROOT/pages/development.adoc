@@ -112,6 +112,10 @@ The tests do not use fixed waits or pixel coordinates.
 
 The coverage thresholds are 95 % statements, 90 % branches, 95 % functions and 95 % lines.
 
+A screenshot test waits for the `opened` event and for the dialog animation before it captures an image.
+A pixel difference below 0.5 % passes, which absorbs text antialiasing and Material state layer differences.
+A larger difference fails.
+
 == Screenshot baselines
 
 The screenshot baselines are normal Git files.

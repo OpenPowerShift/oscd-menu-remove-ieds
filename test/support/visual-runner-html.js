@@ -23,7 +23,8 @@ export const visualRunnerHtml = testFramework => `
      font-kerning: none;
      text-rendering: geometricPrecision;
      font-variant-ligatures: none;
-     letter-spacing: 0.01em;}
+     letter-spacing: 0.01em;
+     caret-color: transparent !important;}
     </style>
     <script>window.process = { env: ${JSON.stringify(process.env)} }</script>
     <script type="module" src="${testFramework}"></script>

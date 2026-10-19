@@ -409,12 +409,30 @@ export class PluginDriver {
     await this.settle();
   }
 
-  private async waitForOpen(dialog: { open: boolean } | null): Promise<void> {
-    await waitUntil(
-      () => dialog?.open === true,
-      'the dialog did not open',
-      { timeout: 5000 },
-    );
+  private async waitForOpen(
+    dialog: (Element & { open: boolean }) | null,
+  ): Promise<void> {
+    await waitUntil(() => dialog?.open === true, 'the dialog did not open', {
+      timeout: 5000,
+    });
+    if (dialog === null) {
+      return;
+    }
+    // `open` becomes true before the open animation finishes. Wait for the
+    // animation so a screenshot is not a half-faded dialog.
+    const shadowRoot = dialog.shadowRoot as
+      | (ShadowRoot & {
+        getAnimations?: (options?: {
+          subtree?: boolean;
+        }) => Animation[];
+      })
+      | null;
+    const animations = [
+      ...dialog.getAnimations({ subtree: true }),
+      ...(shadowRoot?.getAnimations?.({ subtree: true }) ?? []),
+    ];
+    await Promise.allSettled(animations.map(animation => animation.finished));
+    await this.settle();
   }
 
   private async waitForEditor(): Promise<void> {
@@ -423,10 +441,15 @@ export class PluginDriver {
         const editor = deepQuery(this.root, 'oscd-ace-editor') as
           | OscdAceEditor
           | null;
-        return editor?.editor !== undefined && editor.editor.getReadOnly();
+        return (
+          editor?.editor !== undefined &&
+          editor.editor.getReadOnly() &&
+          editor.editor.getValue().length > 0
+        );
       },
       'the read-only SCL preview did not load',
       { timeout: 5000 },
     );
+    await this.settle();
   }
 }

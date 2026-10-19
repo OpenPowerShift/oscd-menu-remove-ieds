@@ -516,6 +516,25 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
   Do not let the orchestrator build this branch before the baseline workflow
   runs.
 
+### 2026-10-20 - follow-up: visual baseline stability
+
+- The baselines were captured while the dialog open animation was still
+  running. The driver waited for `dialog.open`, which becomes true before the
+  animation ends, so the review and confirmation images were half-faded. The
+  first CI diff showed 3.30 % for the SubNetwork review and 0.02 % for the
+  confirmation.
+- `waitForOpen` now waits for the dialog's running animations, and the ACE
+  preview waits for a non-empty value. The visual runner disables the text
+  caret.
+- The visual plugin now uses a local `getImageDiff` with a 0.5 % tolerance for
+  sub-pixel text antialiasing. A real layout change is much larger and still
+  fails.
+- Verified in a scratch worktree: with the fixed waits and the tolerance, three
+  consecutive visual runs pass 12/12 with no diff.
+- The existing CI baselines were captured before the fix, so they must be
+  regenerated once with the `update-visual-baselines` label.
+- `tsc` pass, lint pass, `npm test` 27 s and 62 tests pass. Coverage 97.69 %.
+
 ### 2026-10-20 - follow-up: stable dialog size
 
 - Removed the `with-options` size switch. The dialog is now 1080 px wide (94 vw
