@@ -415,23 +415,23 @@ export class PluginDriver {
     await waitUntil(() => dialog?.open === true, 'the dialog did not open', {
       timeout: 5000,
     });
-    if (dialog === null) {
-      return;
-    }
-    // `open` becomes true before the open animation finishes. Wait for the
-    // animation so a screenshot is not a half-faded dialog.
-    const shadowRoot = dialog.shadowRoot as
-      | (ShadowRoot & {
-        getAnimations?: (options?: {
-          subtree?: boolean;
-        }) => Animation[];
-      })
-      | null;
-    const animations = [
-      ...dialog.getAnimations({ subtree: true }),
-      ...(shadowRoot?.getAnimations?.({ subtree: true }) ?? []),
-    ];
-    await Promise.allSettled(animations.map(animation => animation.finished));
+    // `open` becomes true before the open animation finishes. The animation
+    // runs on elements inside nested shadow roots (the confirmation component
+    // contains an `oscd-dialog`, which owns another shadow root), so collect
+    // the animations from every shadow tree.
+    const animations: Animation[] = [];
+    const collect = (root: ParentNode): void => {
+      root.querySelectorAll('*').forEach((element) => {
+        animations.push(...element.getAnimations());
+        if (element.shadowRoot !== null) {
+          collect(element.shadowRoot);
+        }
+      });
+    };
+    collect(this.root);
+    await Promise.allSettled(
+      animations.map(animation => animation.finished),
+    );
     await this.settle();
   }
 

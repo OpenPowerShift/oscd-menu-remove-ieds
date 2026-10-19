@@ -539,6 +539,11 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
 - `waitForOpen` now waits for the dialog's running animations, and the ACE
   preview waits for a non-empty value. The visual runner disables the text
   caret.
+- The confirmation image stayed transient even after that wait, because the
+  confirmation component contains an `oscd-dialog`, whose animation runs in a
+  second nested shadow root. The driver now collects animations recursively
+  from the plugin's shadow trees and awaits them all. The confirmation image is
+  fully opaque, with the Back and Confirm buttons visible.
 - The visual plugin now uses a local `getImageDiff` with a 0.5 % tolerance for
   sub-pixel text antialiasing. A real layout change is much larger and still
   fails.
