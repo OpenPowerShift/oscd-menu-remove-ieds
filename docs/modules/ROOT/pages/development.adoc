@@ -1,0 +1,180 @@
+= Development
+include::partial$base.adoc[]
+:uri-node: https://nodejs.org/
+
+== Prerequisites
+
+The plugin uses Node.js and npm.
+Use Node.js 22.
+The CI workflows use Node.js 22.
+
+== Clone and run the demo
+
+. Clone the repository:
++
+ $ git clone {url-repo}
+. Install the dependencies:
++
+ $ npm install
+. Start the development server:
++
+ $ npm run start
+. Open `http://localhost:8000/demo/` in a browser.
+
+The demo uses `oscd-shell`.
+It loads `demo/sample.scd` and the Open and Save menu plugins.
+
+== Commands
+
+[cols="1,2"]
+|===
+|Command |Purpose
+
+|`npm run lint`
+|Run ESLint with the shared configuration.
+
+|`npm run format`
+|Run ESLint and apply the automatic fixes.
+
+|`npm run build`
+|Compile `src/` to `dist/`.
+
+|`npm run bundle`
+|Build the plugin bundle and the demo.
+
+|`npm test`
+|Run the unit and component tests with coverage.
+
+|`npm run test:watch`
+|Run the tests in watch mode.
+
+|`npm run test:visual`
+|Run the screenshot tests.
+
+|`npm run test:update`
+|Update the screenshot baselines. CI owns this command.
+
+|`npm run start`
+|Run the development server.
+
+|`npm run start:bundle`
+|Run the bundled demo.
+|===
+
+== Source layout
+
+[cols="1,2"]
+|===
+|Path |Contents
+
+|`src/oscd-menu-remove-ieds.ts`
+|The menu plugin and the dialogs.
+
+|`src/oscd-removal-confirmation.ts`
+|The confirmation dialog.
+
+|`src/theme.ts`
+|The `--oscd-theme-*` to `--oscd-*` palette mapping.
+
+|`src/foundation/`
+|Pure logic with a unit test for each module.
+
+|`src/testing/`
+|The mount helper, the DOM driver and the fixture loader.
+
+|`test/fixtures/`
+|SCL documents for the tests.
+
+|`test/screenshots/baseline/`
+|The CI-owned screenshot baselines.
+|===
+
+== Edits and SCL
+
+The plugin dispatches `oscd-edit-v2` events.
+It uses the `Insert`, `Remove` and `SetAttributes` edit types.
+It uses `@openscd/scl-lib` for the removal of an IED and for `isPublic`.
+
+The root component owns the dialog state.
+The pure functions in `src/foundation/` build the edits and the confirmation summary.
+Do not change the document directly.
+
+== Tests
+
+The unit and component tests are `*.spec.ts` files next to the source.
+The screenshot tests are `*.test.ts` files.
+
+The mount helper applies every edit as the host does.
+The driver is the only test file which knows the DOM structure.
+The tests wait for events and for `updateComplete`.
+The tests do not use fixed waits or pixel coordinates.
+
+The coverage thresholds are 95 % statements, 90 % branches, 95 % functions and 95 % lines.
+
+== Screenshot baselines
+
+The screenshot baselines are normal Git files.
+They are not Git LFS files.
+
+Do not create or update a baseline on a development machine.
+The `Update visual baselines` workflow creates the baselines on CI.
+
+To add a baseline:
+
+. Add or change a screenshot test.
+. Open a pull request.
+. Add the `update-visual-baselines` label to the pull request.
+. Review the new images in the pull request.
+
+The documentation images are relative symbolic links to the baselines.
+A broken link stops the documentation site.
+The test workflow fails when a link is broken.
+
+== Documentation
+
+The user documentation is an Antora component in `docs/`.
+The pages are in `docs/modules/ROOT/pages`.
+The images are in `docs/modules/ROOT/images`.
+The `docs/plan.md` file is a developer note and not an Antora page.
+
+Build the site with the `sysconex-docs` playbook.
+The playbook uses `start_path: docs` and reads the repository with Git.
+
+== Package contents
+
+The npm package contains the built plugin in `dist/`.
+It excludes the specifications, the tests, the test helpers, the demo and the deploy page.
+
+== Release
+
+The `Release and deploy` workflow runs the tests before a release.
+It uses release-please, then publishes to npm with Trusted Publishing.
+The demo is deployed to GitHub Pages after the tests pass.
+
+Configure these items once:
+
+[cols="1,2"]
+|===
+|Item |Setting
+
+|GitHub secret
+|`RELEASE_PLEASE_TOKEN`, with Contents, Pull requests and Issues read/write.
+
+|Branch protection
+|Require the `Lint and unit tests` and `Visual regression tests` checks on `main`.
+
+|GitHub Pages
+|Serve the `gh-pages` branch.
+
+|npm
+|Publish the first version by hand, then add a trusted publisher for `release.yml`.
+|===
+
+== Known upstream limitation
+
+`@openscd/scl-lib` 2.0.1 merges LNodes by `Bay`, `VoltageLevel` or `Substation`.
+The SCL schema applies the uniqueness rule to the immediate parent container.
+In a rare case, a matching unbound LNode in one container can remove a bound LNode in another container.
+
+The limitation is reported upstream.
+The plugin keeps the `scl-lib` behaviour until a fixed release is available.

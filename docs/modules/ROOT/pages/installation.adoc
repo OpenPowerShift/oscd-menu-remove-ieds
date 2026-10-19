@@ -1,0 +1,62 @@
+= Get the plugin
+include::partial$base.adoc[]
+
+== Try the plugin online
+
+Open the {url-demo}[online demo].
+The demo opens a sample SCL file.
+
+== Add the plugin to an OpenSCD distribution
+
+The plugin is a menu plugin.
+It uses the OpenSCD plugin API, which `oscd-shell` and the newer OpenSCD distributions use.
+
+Add this entry to the `menu` plugins of the distribution:
+
+[source,json,subs=+attributes]
+----
+{
+  "name": "{plugin-title}",
+  "icon": "delete",
+  "requireDoc": true,
+  "src": "{url-bundle}"
+}
+----
+
+The `src` URL is the bundle which CI builds from the `main` branch.
+To use a release, install the {url-npm}[npm package] and set `src` to its bundle.
+
+The host must supply the `doc` property and a reactive `docVersion` property.
+The plugin uses `oscd-edit-v2` events.
+
+== Add the plugin to your own distribution
+
+. Install the package:
++
+ $ npm install @openpowershift/oscd-menu-remove-ieds
+. Add the menu entry to the plugins file of the distribution.
+. Set `requireDoc` to `true`, so that the entry is available only with an open document.
+. Set `src` to the bundled file in the package.
+. Build the distribution.
+
+== Menu entry fields
+
+[cols="1,3"]
+|===
+|Field |Meaning
+
+|`name`
+|The label in the menu.
+This guide uses *Remove IEDs*.
+
+|`icon`
+|The Material Symbols name.
+The plugin uses `delete`.
+
+|`requireDoc`
+|Set this field to `true`.
+The plugin needs an open SCL document.
+
+|`src`
+|The URL of the plugin bundle.
+|===

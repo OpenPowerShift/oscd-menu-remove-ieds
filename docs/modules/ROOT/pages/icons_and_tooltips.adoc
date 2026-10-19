@@ -1,0 +1,29 @@
+= Icons and tooltips
+include::partial$base.adoc[]
+
+== Menu icon
+
+The menu entry uses the Material Symbols icon `delete`.
+
+== Dialog icons
+
+The search field uses the Material Symbols icon `search`.
+
+The warning icon `warning` marks a deletion which removes data or a section.
+The warning icon is decorative.
+The text next to the icon carries the meaning.
+The plugin does not use color alone to show a warning.
+
+== Tooltips
+
+The plugin does not add tooltips.
+Each action has a visible label.
+
+The btn:[Review SCL...] buttons also have an accessible name which includes the section name.
+For example, the name is *Review SCL for SubNetwork StationBus*.
+
+== Keyboard
+
+The dialog and its actions are keyboard reachable.
+The host moves the focus into the dialog when the dialog opens.
+kbd:[Escape] closes the dialog.

@@ -1,299 +1,110 @@
 = OpenSCD Plugin: Remove IEDs
+:plugin-name: oscd-menu-remove-ieds
+:plugin-title: Remove IEDs
 :sectnums:
 :sectlinks:
 :toc: macro
-:imagesdir: docs/media
 :icons: font
 :experimental:
-:uri-nvm: https://github.com/creationix/nvm
-:uri-nvm-install: {uri-nvm}#installation
-:uri-action-translate-ci-bundle: https://jakobvogelsang.github.io/oscd-action-translate/oscd-action-translate.js
-:uri-openscd-core: https://github.com/openscd/open-scd-core#readme
-:uri-openscd: https://github.com/openscd
-:uri-openscd-app: https://openscd.github.io
-:uri-openscd-core-app: https://openscd.github.io/open-scd/
-:uri-openscd-core-plugin: pass:v[https://openscd.github.io/open-scd/?plugins=%7B%22menu%22:%5B%7B%22name%22:%22Open%20File%22,%22translations%22:%7B%22de%22:%22Datei%20%C3%B6ffnen%22%7D,%22icon%22:%22folder_open%22,%22active%22:true,%22src%22:%22https://openscd.github.io/oscd-open/oscd-open.js%22%7D,%7B%22name%22:%22Save%20File%22,%22translations%22:%7B%22de%22:%22Datei%20speichern%22%7D,%22icon%22:%22save%22,%22active%22:true,%22src%22:%22https://openscd.github.io/oscd-save/oscd-save.js%22%7D,%7B%22name%22:%22Remove%20IEDs%22,%22icon%22:%22delete%22,%22active%22:true,%22requireDoc%22:true,%22src%22:%22https://danyill.github.io/oscd-remove-ieds/oscd-remove-ieds.js%22%7D%5D%7D]
-// TIP:
-// the above URI is done by taking the plugins object from demo.html and updating to
-// the correct {uri-ci-bundle} value and then in the browser calling:
-//
-//   console.log(`https://openscd.github.io/open-scd/?plugins=${encodeURI(JSON.stringify(plugins))}`)
-//
-// Don't forget the last bracket in the attribute definition.
-:uri-openwc: https://github.com/open-wc/open-wc
-:uri-plugin: https://github.com/danyill/oscd-remove-ieds
-:uri-ci-bundle: https://danyill.github.io/oscd-remove-ieds/oscd-remove-ieds.js
-:uri-material-icons: https://fonts.google.com/icons
-:uri-openscd-core-plugin-demo: https://danyill.github.io/oscd-remove-ieds/index.deploy.html
-:uri-addon-plugin-siemens: https://github.com/danyill/oscd-subscriber-lb-siemens
-:uri-addon-plugin-sel: https://github.com/danyill/oscd-subscriber-lb-sel
-:uri-addon-plugin-nr: https://github.com/danyill/oscd-subscriber-lb-nr
+:uri-docs: https://openpowershift.github.io/sysconex-docs/
+:uri-repo: https://github.com/OpenPowerShift/oscd-menu-remove-ieds
+:uri-issues: {uri-repo}/issues
+:uri-demo: https://openpowershift.github.io/oscd-menu-remove-ieds/demo/
+:uri-bundle: https://openpowershift.github.io/oscd-menu-remove-ieds/oscd-menu-remove-ieds.js
+:uri-npm: https://www.npmjs.com/package/@openpowershift/oscd-menu-remove-ieds
+:uri-chat: https://openscd.zulipchat.com/
+:uri-node: https://nodejs.org/
 
 // badges
-image:https://github.com/danyill/oscd-remove-ieds/actions/workflows/test.yml/badge.svg[title='Build Status']
-image:https://img.shields.io/badge/built%20with-open--wc-blue.svg[link={uri-openwc},title='Built with open-wc recommendations']
-image:https://img.shields.io/badge/LF%20Energy%20Slack-%20%23OpenSCD%20chat-purple?logo=slack&color=2aa198&labelColor=6c71c4[link=https://lfenergy.slack.com/archives/C03LH7EUP34,title='Slack LF Energy']
+image:https://github.com/OpenPowerShift/oscd-menu-remove-ieds/actions/workflows/test.yml/badge.svg[title='Build Status']
+image:https://img.shields.io/badge/LF%20Energy%20Slack-%20%23OpenSCD%20chat-purple?logo=slack&color=2aa198&labelColor=6c71c4[link={uri-chat},title='OpenSCD chat']
 
 toc::[]
 
 == What is this?
 
-This plugin is intended to allow a user to remove multiple IEDs from an SCL file.
+This plugin removes one or more IEDs from an SCL file.
+It is a menu plugin for OpenSCD.
+It uses the `oscd-edit-v2` event and the `doc` and `docVersion` plugin properties.
 
-* This is an OpenSCD menu plugin using `@openscd/oscd-api` EditV2 events.
-The local demo uses `@omicronenergy/oscd-shell`.
+The plugin removes the data which refers to the selected IEDs:
 
-* This plugin is a web component and follows the
-{uri-openwc}[open-wc] recommendations.
+* The `IED` and `AccessPoint` elements.
+* `ConnectedAP`, `GSE` and `SMV` addresses.
+* `Association`, `ClientLN` and `KDC` elements.
+* `IEDName` text content.
+* Subscriptions and supervisions in other IEDs.
 
-* This plugin uses the link:LICENSE[Apache License] and is intended for you to use, study, share and improve.
+Associated `LNode` elements are preserved with `iedName="None"` by default.
+The dialog can delete them instead.
+The dialog can also delete a `SubNetwork` or a `Communication` section which the removal empties.
+Both section deletions are off by default and show a schema warning.
 
-{uri-openscd-core-plugin-demo}[Try it out online]!
+All changes from one removal are one undoable action.
 
-Feel free to log issues to request fixes, improvements or new features.
+See the {uri-docs}[documentation] or {uri-demo}[try it online].
 
-== How to use?
+== Add the plugin
 
-Select IEDs and choose *Remove*. Associated LNodes are preserved with
-`iedName="None"` by default, with matching duplicates removed. Check
-*Remove associated LNodes* to delete them instead. This option appears when a
-selected IED has public LNode bindings and resets when the dialog opens or no
-bound IEDs remain selected.
+Add this entry to the `menu` plugins of an OpenSCD distribution:
 
-Additional removal options appear in a lower panel that expands when needed and
-stays open until the dialog closes; options scroll within it. The transition
-respects reduced-motion preferences.
-
-If removal leaves a SubNetwork without ConnectedAPs, the user is presented with the option to
-remove the SubNetwork (risking data loss) or keep it (causing a schema violation). If this also empties the Communication section, the user is
-presented with an additional option to delete that too; otherwise it remains schema-invalid.
-User can view the affected SCL by clicking on the *Review SCL...* button next to each option/checkbox they're presented.
-
-If the user was presented with additional options to remove sections, clicking "Remove" popups up a Confirmation dialog, which lists affected IEDs,
-LNode handling, and lists out what sections will be deleted or retained. User can *Confirm* to apply thos changes or
-*Back* to return and refine their choices.
-Removing IEDs which don't result in empty sections do not need confirmation.
-All resulting edits squashed into one, meaning a single undo restores all IED and changes to other sections.
-
-NOTE: The distribution instructions below require a host that handles `oscd-edit-v2` events and supplies the current `doc` and reactive `docVersion` properties. Older hosts that only supply `editCount` need updating. No action-translation plugin is required for an EditV2-compatible host.
-
-=== Online Using the Latest open-scd-core
-
-==== Using a URL
-
-Open SCD core allows plugins to be loaded from a URL.
-
-You can click on {uri-openscd-core-plugin}[this link] to trial this plugin.
-
-In this view it is without theming and only presents this plugin along with the open and save plugins.
-
-==== Manually
-
-. The latest core is available at {uri-openscd-core-app}.
-
-. Go to menu:Menu[Add plugins...]
-
-. Select a menu plugin.
-
-. Select OK to require a loaded document.
-
-. Choose a plugin name of 'Remove IEDs'.
-
-. Choose a plugin icon of 'delete'
-
-. Provide a plugin source URI of: {uri-ci-bundle}
-
-. Click OK on the summary, it should like similar to that shown below:
-+
-image::screenshot-openscd-core-add.png[width=250]
-
-. Open a file and enjoy!
-
-=== Locally for testing
-
-See <<Development>>
-
-=== As part of the OpenSCD distribution
-
-NOTE: Menu labels and plugin configuration depend on the OpenSCD distribution. The local demo in this repository uses `oscd-shell`; see `demo/index.html` and `demo/plugins.js`.
-
-. Open your OpenSCD distribution or use {uri-openscd-app}.
-
-. Create a custom extension by going to menu:menu[Extensions>Add Custom Extension].
-
-. Enter the name 'Remove IEDs', select 'Menu entry' and enter {uri-ci-bundle} as the URL.
-+
-This is the URL of the bundle built by CI and is always the latest alpha version of this plugin.
-+
-.OpenSCD Add Custom Extension Screen
-image::screenshot-add-extension.png[width=300]
-
-. Click on menu:Add[].
-
-. Open an SCL file and choose "Remove IEDs" from the menu.
-
-=== As part of your own distribution
-
-==== Within the current OpenSCD distribution
-
-. Within the current OpenSCD distribution, plugins are stored in the `public/js/plugins.js` folder.
-Each plugin appears in the following form:
-+
-[source,js,subs=+attributes]
+[source,json,subs=+attributes]
 ----
 {
-    name: 'Remove IEDs', // <.>
-    src: '{uri-ci-bundle}', //  <.>
-    icon: 'delete', // <.>
-    default: true, // <.>
-    kind: 'menu', // <.>
-    requireDoc: true, // <.>
-    position: 'middle' // <.>
-  }
-----
-<.> Name of the plugin which appears in the menu
-<.> URL which can be a local or remote resource.
-For a local resource, begins without a forward slash, e.g. `plugins/oscd-remove-ieds/dist/oscd-remove-ieds.js`.
-In this case what is shown is loading a plugin from the build process.
-<.> A material icon, see others at {uri-material-icons}[Material Symbols and Icons]
-<.> Whether the plugin is enabled by default or has to be enabled in the plugins menu
-<.> The type of plugin, either `menu` or `editor`. This is a `menu` plugin.
-<.> Whether a document must be loaded for this plugin to be available
-<.> A string, either `top`, `middle` or `bottom` to give a location in the menu.
-Otherwise inferred from the order in the file relative to other plugins.
-
-. You need to copy an entry like the above, ensure the `src` URL resolves and the plugin should be loaded when the distribution is built.
-
-. If you are building locally you likely need to run an `npm run bundle` command in each plugin to make the `dist` folder, containing a single JavaScript file with the plugin available to OpenSCD.
-
-==== Within an OpenSCD core distribution
-
-Within an OpenSCD core distribution, plugins are also loaded from a json file with a slightly different schema.
-
-. Typically the distribution will be served from a static web page and within the web page there will be a plugins property declared on an `open-scd` object, for instance:
-+
-[source,js]
-----
-<open-scd
-  plugins='{
-  "menu":
-  [
-    {"name": "Open File", "translations": {"de": "Datei öffnen"}, "icon": "folder_open", "active": true, "src": "https://openscd.github.io/oscd-open/oscd-open.js"},
-    {"name": "Save File", "translations": {"de": "Datei speichern"}, "icon": "save", "active": true, "src": "https://openscd.github.io/oscd-save/oscd-save.js"},
-    {"name": "Remove IEDs", "icon": "delete", "active": true, "requireDoc": true, "src": "/plugins/oscd-remove-ieds/dist/oscd-remove-ieds.js"}
-  ]
-}'
-></open-scd>
-----
-
-. This plugin is a menu plugin; add an entry to the `menu` array in the following form:
-+
-[source,js,subs=+attributes]
-----
-{
-  "name": "Remove IEDs", // <.>
-  "icon": "delete", // <.>
-  "active": true, // <.>
-  "requireDoc": true, // <.>
-  "src": "{uri-ci-bundle}" // <.>
+  "name": "{plugin-title}",
+  "icon": "delete",
+  "requireDoc": true,
+  "src": "{uri-bundle}"
 }
 ----
-<.> Name of the plugin which appears in the menu
-<.> A material icon, see others at {uri-material-icons}[Material Symbols and Icons]
-<.> Whether the plugin is enabled by default or has to be enabled in the plugins menu
-<.> Whether a document must be loaded for this plugin to be available
-<.> URL which can be a local or remote resource.
-For a local resource, begins without a forward slash, e.g. `plugins/oscd-remove-ieds/dist/oscd-remove-ieds.js`.
-In this case what is shown is loading a plugin from the internet using the continuous integration build process.
 
-. You need to copy an entry like the above, ensure the `src` URL resolves and the plugin should be loaded when the distribution is built.
+The host must supply `doc` and a reactive `docVersion`.
+A host which supplies only the legacy `editCount` does not work.
 
-. If you are building locally you likely need to run an `npm run bundle` command in each plugin to make the `dist` folder, containing a single JavaScript file with the plugin available to OpenSCD.
+To use a release, install the {uri-npm}[npm package] and set `src` to its bundle.
 
 == Development
 
-=== Prerequisites
+The plugin uses Node.js 22 and `@omicronenergy/oscd-tooling`.
 
-This plugin uses Node.js and the npm package ecosystem and is verified to work on Linux.
-
-For development, you'll need Node.js 24 (including npm, which is bundled with Node.js) on your system.
-
-To check whether you have Node.js installed, and which version, open a terminal and type:
-
- $ node -v
-
-A good way to install Node.js is to use {uri-nvm}[nvm] (Node Version Manager), however system-wide installations may also work.
-
-If you're using Linux or macOS, follow {uri-nvm-install}[the nvm installation instructions] to set up nvm on your machine.
-
-Once you've installed nvm, open a *new* terminal and install Node.js 24 using:
-
- $ nvm install 24
-
-Now that you have Node.js installed, you can install this plugin.
-
-=== Cloning and Demo Server
-
-TIP: This repository uses Git LFS so ensure this is is installed on your system prior
-(on Debian based systems `sudo apt install git-lfs`).
-Then clone this repository using:
-
-[subs=+attributes]
- $ git clone {uri-plugin}
-
-Now, install dependencies
-
- $ npm i
-
-Start up a demo server
-
+ $ npm install
  $ npm run start
 
-Now open in your browser locally to http://localhost:8000/demo/ to use the plugin.
-The demo loads `oscd-shell` and registers the plugin in its scoped registry via `demo/plugins.js`.
+Open `http://localhost:8000/demo/` in a browser.
 
-=== Linting and formatting
+[cols="1,2"]
+|===
+|Command |Purpose
 
-To scan the project for linting and formatting errors, run
+|`npm run lint`
+|Run the linter.
 
- $ npm run lint
+|`npm test`
+|Run the unit and component tests with coverage.
 
-To automatically fix linting and formatting errors, run
+|`npm run build`
+|Build `dist/`.
 
- $ npm run format
+|`npm run bundle`
+|Build the plugin bundle and the demo.
 
-Formatting is now handled by the shared ESLint stylistic rules, rather than Prettier.
+|`npm run test:visual`
+|Run the screenshot tests.
+|===
 
-=== Testing with Web Test Runner
+The screenshot baselines are owned by CI.
+Do not create or update them on a development machine.
 
-Before the first test run, install the browsers using the shared tooling:
+See {uri-docs}[the documentation] for the architecture, the test strategy, the screenshot workflow and the release setup.
 
- $ npm exec oscd install-playwright
+== Support
 
-To execute a single test run:
+Open an {uri-issues}[issue] to report a problem or to ask for a change.
+Use the OpenSCD {uri-chat}[Zulip chat] for questions.
 
- $ npm run test
+== License
 
-To run the tests in interactive watch mode run:
+This plugin uses the link:LICENSE[Apache License].
+You can use, study, share and improve it.
 
- $ npm run test:watch
-
-=== Tooling configs
-
-To interactively select dependency updates using the shared tooling's update policy:
-
- $ npm run updates
-
-To generate TypeDoc documentation in `dist/doc` without CEM analysis:
-
- $ npm run doc
-
-Scripts and dependency declarations are in `package.json`.
-Build, bundle, lint, test and development-server commands use the `oscd` CLI from
-`@omicronenergy/oscd-tooling`.
-`tsconfig.json` and `eslint.config.js` extend its shared configs;
-`web-test-runner.config.js` retains Chromium, Firefox and WebKit coverage.
-`npm install` installs the shared hooks in `.githooks`.
-Custom Elements Manifest generation is no longer configured.
-
-© 2023 OpenSCD Daniel Mulholland
+© 2026 OpenPowerShift

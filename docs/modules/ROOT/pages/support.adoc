@@ -1,0 +1,14 @@
+= Support
+include::partial$base.adoc[]
+
+* To report a problem or to ask for a change, open an {url-issues}[issue].
+* To ask a question, use the OpenSCD {url-chat}[Zulip chat].
+The plugin authors are often there.
+
+Include these items in an issue:
+
+* The plugin version.
+* The browser and the host distribution.
+* The steps which reproduce the problem.
+* The smallest SCL file which shows the problem.
+* The expected result and the actual result.

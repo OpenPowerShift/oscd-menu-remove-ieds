@@ -1,0 +1,61 @@
+= Introduction
+include::partial$base.adoc[]
+:sectnums!:
+
+The {plugin-title} plugin removes one or more IEDs from an SCL document.
+Use it to clean an SCL file after you remove equipment from a project.
+
+.The Remove IEDs dialog
+image::initial.png[The Remove IEDs dialog with the IED list and the Cancel and Remove buttons.]
+
+== What the plugin does
+
+When you remove an IED, the plugin also removes the SCL data which refers to that IED:
+
+* The `IED` element and its `AccessPoint` elements.
+* The `ConnectedAP` elements and their `GSE` and `SMV` addresses.
+* `Association`, `ClientLN` and `KDC` elements.
+* `IEDName` text content.
+* Subscriptions and supervisions in other IEDs.
+
+== Associated LNodes
+
+The plugin preserves associated `LNode` elements by default.
+The plugin sets `iedName="None"` on a bound LNode.
+The LNode then records the specification without a binding to an IED.
+
+If the selected IED has bound LNodes, the dialog also offers *Delete associated LNodes*.
+Use this option when you want to delete the specifications too.
+
+== SCL sections which become empty
+
+A `SubNetwork` must contain at least one `ConnectedAP`.
+A `Communication` section must contain at least one `SubNetwork`.
+
+The plugin can delete an emptied `SubNetwork`.
+It can also delete `Communication` when that section becomes empty.
+Both choices are optional and are off by default.
+For more information, refer to xref:removal_options.adoc[].
+
+== Edit model
+
+The plugin uses the `oscd-edit-v2` event and the `doc` and `docVersion` plugin properties.
+All changes from one removal form one undoable action in the host.
+
+The host must supply a reactive `docVersion`.
+A host which supplies only the legacy `editCount` does not work.
+
+== Theme
+
+The plugin uses the `--oscd-theme-*` variables of the distribution.
+It works with a light theme and with a dark theme.
+
+.The same dialog in a dark theme
+image::dark-theme.png[The Remove IEDs dialog in a dark theme, with light text on a dark surface.]
+
+== Limits
+
+* The plugin does not delete unused `DataTypeTemplates`.
+Unused templates are schema-valid and other IEDs can share them.
+* The plugin does not repair an empty `SubNetwork` which existed before the removal.
+* The plugin does not change `ExtRef` elements which have no `iedName`.

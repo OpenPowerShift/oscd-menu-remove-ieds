@@ -1,0 +1,32 @@
+= Search
+include::partial$base.adoc[]
+
+The IED list has a search field.
+The list shows only the IEDs which match the text.
+
+.A search for two IEDs
+image::search.png[The dialog with DEMO_BOUND in the search field and two matching IEDs.]
+
+== Search rules
+
+* The search is not case sensitive.
+`bound` finds `DEMO_BOUND_A`.
+* A space separates two terms.
+An item must match all the terms.
+* Quotes (`"` or `'`) keep a phrase together.
+* `*` matches any text.
+* `?` matches one character.
+
+== What the search looks at
+
+The search looks at both lines of each item:
+
+* The IED name, manufacturer and type.
+* The description, the configuration version and the SCL edition.
+
+== Clear the search
+
+Delete the text in the search field.
+The list shows all IEDs again.
+
+The plugin clears the search when the dialog opens.

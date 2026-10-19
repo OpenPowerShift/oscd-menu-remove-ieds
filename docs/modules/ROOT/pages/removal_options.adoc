@@ -1,0 +1,68 @@
+= Removal options
+include::partial$base.adoc[]
+
+The *Removal options* panel appears when the selection has an effect on LNodes or on the communication sections.
+
+.The options for two IEDs which empty one SubNetwork
+image::subnetwork-options.png[The removal options panel with the LNode checkbox and the option to delete the emptied SubNetwork.]
+
+== Delete associated LNodes
+
+The option is available when a selected IED has at least one bound `LNode`.
+
+The option is off by default.
+When the option is off, the plugin preserves the LNodes with `iedName="None"` and merges duplicates.
+When the option is on, the plugin deletes the LNodes which the selected IEDs bind.
+
+The option is also off when the selection no longer has bound LNodes.
+
+== Delete an emptied SubNetwork
+
+A `SubNetwork` must contain at least one `ConnectedAP`.
+The plugin shows this option when the removal deletes the last `ConnectedAP` of a network.
+
+The option is off by default.
+When the option is off, the empty `SubNetwork` stays in the document and the document violates the SCL schema.
+When the option is on, the plugin deletes the complete `SubNetwork`.
+The deletion also removes the `Private` data, the `BitRate` and the other contents of the network.
+
+Select btn:[Review SCL...] to see the network before you decide.
+The preview is read-only.
+
+.The read-only SCL preview for a SubNetwork
+image::scl-review.png[The read-only SCL preview of the emptied SubNetwork, with the Close button.]
+
+== Delete Communication
+
+A `Communication` section must contain at least one `SubNetwork`.
+The plugin shows this option when you select every affected `SubNetwork` for deletion.
+
+The option is off by default.
+When the option is off, the empty `Communication` section stays in the document and the document violates the SCL schema.
+When the option is on, the plugin deletes the complete `Communication` section.
+
+Select btn:[Review SCL...] next to the option to see the `Communication` section before you decide.
+
+.The read-only SCL preview for Communication
+image::communication-review.png[The read-only SCL preview of the Communication section, with the Close button.]
+
+.The options which delete every network and the Communication section
+image::communication-options.png[The removal options panel with all three networks selected and the option to delete Communication.]
+
+== Review and confirm
+
+Select btn:[Remove] after you choose the options.
+The confirmation dialog opens when a SubNetwork is affected.
+
+The summary lists these items:
+
+* The IEDs.
+* The LNode handling.
+* The deleted `SubNetwork` names, or the deleted `Communication` section.
+* The retained sections which violate the SCL schema.
+* A warning about lost `Private` data.
+
+Select btn:[Back] to return to the dialog with the choices unchanged.
+Select btn:[Confirm] to apply the changes.
+
+The plugin applies all changes as one undoable action.

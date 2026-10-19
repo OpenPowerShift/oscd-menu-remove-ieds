@@ -1,0 +1,41 @@
+= Remove IEDs
+include::partial$base.adoc[]
+
+== Remove one or more IEDs
+
+. Select menu:Remove IEDs[].
+. Select one or more IEDs in the list.
+. Select btn:[Remove].
+. If the confirmation dialog opens, review the summary.
+. Select btn:[Confirm] to apply the changes, or btn:[Back] to change the selection.
+. Use the undo function of the host to restore the document.
+
+.The dialog with one IED selected
+image::ied-selected.png[The dialog with one IED selected and the Remove button available.]
+
+== Direct removal and confirmation
+
+The plugin removes the IEDs directly when the selection has no effect on a SubNetwork.
+This includes a selection with bound LNodes.
+
+The confirmation dialog opens when the removal empties at least one SubNetwork.
+The dialog lists the IEDs, the LNode handling and the sections which the plugin deletes or keeps.
+
+.The confirmation dialog
+image::confirmation.png[The confirmation dialog with the IED names, the deleted SubNetwork and the schema warning for the retained section.]
+
+== Associated LNodes
+
+The plugin preserves associated LNodes by default.
+The plugin sets `iedName="None"` on each bound LNode.
+
+To delete the bound LNodes instead, select *Delete associated LNodes* before you select btn:[Remove].
+For more information, refer to xref:removal_options.adoc[].
+
+== Undo
+
+All edits from one removal are one undoable action.
+One undo restores the IEDs, the LNodes and the communication sections.
+
+The host supplies the undo function.
+The plugin does not add its own undo button.

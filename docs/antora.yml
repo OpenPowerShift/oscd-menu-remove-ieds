@@ -1,0 +1,10 @@
+name: oscd-menu-remove-ieds
+title: Remove IEDs
+version: dev
+prerelease: true
+start_page: introduction.adoc
+asciidoc:
+  attributes:
+    prerelease: true
+nav:
+  - modules/ROOT/nav.adoc

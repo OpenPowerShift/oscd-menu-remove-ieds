@@ -400,7 +400,7 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
 | 5 | Fix cancel/Escape, empty-selection guard, options collapse, selection preservation, dangling separator | Done |
 | 6 | Add visual config, screenshot tests, local fonts | Done |
 | 7 | Replace CI workflows, release config, package contents, demo; validate YAML | Done |
-| 8 | Add Antora docs, image symlinks, README; update orchestrator playbook | Planned |
+| 8 | Add Antora docs, image symlinks, README; update orchestrator playbook | Done |
 | 9 | Final verification: lint, tsc, build, test, bundle, pack, legacy search, demo | Planned |
 
 ## 9. Worklog
@@ -491,6 +491,30 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
   excluded.
 - Problem found: the bundle also copies `index.deploy.html` into `dist/demo`;
   the package allowlist excludes only the root copy, which is what npm needs.
+
+### 2026-10-20 - step 8: documentation
+
+- Added the Antora component `oscd-menu-remove-ieds`: `docs/antora.yml`,
+  `nav.adoc`, `partials/base.adoc` and 9 pages (introduction, installation,
+  screen, remove, options, search, icons, support, development).
+- Added 11 relative image symlinks in `docs/modules/ROOT/images` to the
+  screenshot baselines. The links are broken until the CI baseline workflow
+  creates the images; the test workflow now fails on any broken link.
+- Rewrote `README.adoc`: removed the dead `docs/media` images, the Git LFS
+  claim and the Node 24 claim; corrected the OpenPowerShift URLs, package name
+  and menu entry; added the documentation and demo links.
+- Updated `sysconex-docs/antora-playbook.yml` with the `oscd-menu-remove-ieds`
+  source, `start_path: docs` and `branches: [upgrade]`. The orchestrator change
+  is left uncommitted, as requested; the unrelated changes in that file are
+  untouched.
+- Documentation check: Antora 3.2.1 parses the component, resolves every xref
+  and produces all 9 pages. The real repository build stops on the 11 broken
+  image links, which is expected before CI creates the baselines. A scratch
+  copy with placeholder images builds without warnings, which verifies the
+  page syntax, navigation and xrefs.
+- Note: the real Git-mode build cannot be checked until the baselines exist.
+  Do not let the orchestrator build this branch before the baseline workflow
+  runs.
 
 ### 2026-10-20 - review and branch setup
 

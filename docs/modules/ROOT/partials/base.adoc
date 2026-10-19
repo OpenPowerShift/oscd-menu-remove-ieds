@@ -1,0 +1,11 @@
+:plugin-name: oscd-menu-remove-ieds
+:plugin-title: Remove IEDs
+:url-repo: https://github.com/OpenPowerShift/oscd-menu-remove-ieds
+:url-issues: https://github.com/OpenPowerShift/oscd-menu-remove-ieds/issues
+:url-chat: https://openscd.zulipchat.com/
+:url-demo: https://openpowershift.github.io/oscd-menu-remove-ieds/demo/
+:url-bundle: https://openpowershift.github.io/oscd-menu-remove-ieds/oscd-menu-remove-ieds.js
+:url-npm: https://www.npmjs.com/package/@openpowershift/oscd-menu-remove-ieds
+:url-docs: https://openpowershift.github.io/sysconex-docs/
+:sectnums:
+:experimental:

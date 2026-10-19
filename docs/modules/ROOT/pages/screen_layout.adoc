@@ -1,0 +1,56 @@
+= The screen
+include::partial$base.adoc[]
+
+Select menu:Remove IEDs[] to open the dialog.
+
+.The Remove IEDs dialog
+image::initial.png[The dialog with the IED list, the search field and the Cancel and Remove buttons.]
+
+== Headline and description
+
+The headline is *Remove IEDs*.
+The description says that the plugin preserves associated LNodes by default.
+
+== Select IEDs
+
+The list shows every `IED` in the document.
+Each item has two lines:
+
+* The IED name, manufacturer and type.
+* The description, the configuration version and the SCL edition.
+
+Select an item to add the IED to the removal selection.
+Select the item again to remove the IED from the selection.
+
+The list has a search field.
+For more information, refer to xref:searching.adoc[].
+
+== Removal options
+
+The *Removal options* panel appears when the selection has an effect on LNodes or on the communication sections.
+The panel stays closed when there is nothing to choose.
+
+.The dialog with no additional options
+image::no-additional-options.png[The dialog with one IED selected and no removal options panel.]
+
+For more information, refer to xref:removal_options.adoc[].
+
+== Actions
+
+btn:[Cancel] closes the dialog and clears the selection.
+
+btn:[Remove] is available when at least one IED is selected.
+The button removes the IEDs directly, or opens the confirmation dialog when a SubNetwork is affected.
+
+== Empty document
+
+When the document has no IEDs, the dialog shows an empty-state message.
+The btn:[Remove] button is not available.
+
+.The empty state
+image::no-ieds.png[The dialog with the message This document has no IEDs.]
+
+== Settings
+
+The plugin has no settings.
+It does not store data in the browser.
