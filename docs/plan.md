@@ -401,7 +401,7 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
 | 6 | Add visual config, screenshot tests, local fonts | Done |
 | 7 | Replace CI workflows, release config, package contents, demo; validate YAML | Done |
 | 8 | Add Antora docs, image symlinks, README; update orchestrator playbook | Done |
-| 9 | Final verification: lint, tsc, build, test, bundle, pack, legacy search, demo | Planned |
+| 9 | Final verification: lint, tsc, build, test, bundle, pack, legacy search, demo | Done |
 
 ## 9. Worklog
 
@@ -515,6 +515,32 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
 - Note: the real Git-mode build cannot be checked until the baselines exist.
   Do not let the orchestrator build this branch before the baseline workflow
   runs.
+
+### 2026-10-20 - step 9: final verification
+
+- `npm ci` passes, including the generated `.githooks`.
+- `npm run lint` passes and `npx tsc --noEmit` passes.
+- `npm run build` and `npm run bundle` pass. `dist/` contains the plugin, the
+  declarations, the assets and the demo; the root deploy redirect is copied.
+- `npm test` passes with 57 tests and 97.65 % coverage. The default run uses
+  Chromium (23.2 s). `BROWSERS=chromium,firefox,webkit npm test` also passes
+  (37.5 s). The default is Chromium because CI installs only Chromium.
+- `npm pack --dry-run` lists 13 files: LICENSE, README, the `dist` bundle,
+  declarations, assets and package.json. It contains no source, spec, test,
+  testing, demo or deploy-page files.
+- No legacy import (`@openscd/open-scd`, `@material/`, `@openenergytools/`,
+  `lit-translate`, `newActionEvent`) remains in `src`, `demo` or `test`.
+- The empty-tracked-file check reports nothing.
+- Demo check with Playwright: the doc loads, the plugin is in the shell
+  registry, `oscd-shell` is exactly 800 px tall in a 1280x800 page, the page
+  scroll height equals the client height, and the console has no errors.
+- Documentation check: a scratch build with placeholder images produces all 9
+  pages with resolved xrefs and local image references. The real repository
+  build is blocked by the 11 baseline symlinks, which CI must create.
+- Remaining known items: the 11 broken documentation symlinks until the baseline
+  workflow runs; `npm audit` reports 41 transitive vulnerabilities (1 low, 40
+  high) from the old shell/menu demo packages; the unit suite is 23 s, above
+  the 10 s target, because of the ACE editor and dialog tests.
 
 ### 2026-10-20 - review and branch setup
 
