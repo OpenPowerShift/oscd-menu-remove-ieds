@@ -2,7 +2,7 @@ import { expect } from '@open-wc/testing';
 import { XMLEditor } from '@openscd/oscd-editor';
 
 import { checkForEmptyCommunicationContainers } from './removal-checks.js';
-import { parseDoc, testDocs } from '../oscd-remove-ieds.testfiles.js';
+import { parseDoc, testDocs } from '../oscd-menu-remove-ieds.testfiles.js';
 
 describe('checking for empty communication containers', () => {
   it('requires the combined selection to remove every connection', () => {

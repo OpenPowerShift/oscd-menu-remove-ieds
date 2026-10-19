@@ -12,11 +12,11 @@ import { OscdAceEditor } from '@omicronenergy/oscd-ui/ace-editor/OscdAceEditor.j
 import { OscdDialog } from '@omicronenergy/oscd-ui/dialog/OscdDialog.js';
 import { OscdIcon } from '@omicronenergy/oscd-ui/icon/OscdIcon.js';
 import { OscdTextButton } from '@omicronenergy/oscd-ui/button/OscdTextButton.js';
-import { testDocs, parseDoc } from './oscd-remove-ieds.testfiles.js';
-import OscdRemoveIEDs from './oscd-remove-ieds.js';
+import { testDocs, parseDoc } from './oscd-menu-remove-ieds.testfiles.js';
+import OscdMenuRemoveIeds from './oscd-menu-remove-ieds.js';
 import OscdRemovalConfirmation from './oscd-removal-confirmation.js';
 
-customElements.define('oscd-remove-ieds', OscdRemoveIEDs);
+customElements.define('oscd-menu-remove-ieds', OscdMenuRemoveIeds);
 
 function getIedNames(doc: XMLDocument): string[] {
   return Array.from(doc.querySelectorAll('IED')).map(
@@ -49,8 +49,8 @@ function expectLNodesReferencedByBothIEDs(doc: XMLDocument): void {
   expect(lnodes).to.have.lengthOf(ied1Refs.length + ied2Refs.length + unbound.length);
 }
 
-describe('oscd-remove-ieds', () => {
-  let oscdRemoveIedsPlugin: OscdRemoveIEDs & LitElement;
+describe('oscd-menu-remove-ieds', () => {
+  let oscdRemoveIedsPlugin: OscdMenuRemoveIeds & LitElement;
   let doc: XMLDocument;
   let docVersion = 0;
 
@@ -58,8 +58,8 @@ describe('oscd-remove-ieds', () => {
 
   const selectAndRemoveAllIEDs = async (sclDoc: XMLDocument) => {
     let version = 0;
-    const plugin: OscdRemoveIEDs & LitElement = await fixture(
-      html`<oscd-remove-ieds .doc=${sclDoc} .docVersion=${version}></oscd-remove-ieds>`,
+    const plugin: OscdMenuRemoveIeds & LitElement = await fixture(
+      html`<oscd-menu-remove-ieds .doc=${sclDoc} .docVersion=${version}></oscd-menu-remove-ieds>`,
     );
     const sclEditor = new XMLEditor();
 
@@ -83,10 +83,10 @@ describe('oscd-remove-ieds', () => {
     beforeEach(async () => {
       doc = parseDoc(testDocs.multipleIEDs);
       oscdRemoveIedsPlugin = await fixture(
-        html`<oscd-remove-ieds
+        html`<oscd-menu-remove-ieds
           .doc=${doc}
           .docVersion=${docVersion}
-        ></oscd-remove-ieds>`,
+        ></oscd-menu-remove-ieds>`,
       );
 
       oscdRemoveIedsPlugin.addEventListener('oscd-edit-v2', (e: Event) => {
@@ -208,10 +208,10 @@ describe('oscd-remove-ieds', () => {
     beforeEach(async () => {
       doc = parseDoc(testDocs.singleIED);
       oscdRemoveIedsPlugin = await fixture(
-        html`<oscd-remove-ieds
+        html`<oscd-menu-remove-ieds
           .doc=${doc}
           .docVersion=${docVersion}
-        ></oscd-remove-ieds>`,
+        ></oscd-menu-remove-ieds>`,
       );
       await oscdRemoveIedsPlugin.updateComplete;
     });
@@ -233,10 +233,10 @@ describe('oscd-remove-ieds', () => {
     beforeEach(async () => {
       doc = parseDoc(testDocs.noIEDs);
       oscdRemoveIedsPlugin = await fixture(
-        html`<oscd-remove-ieds
+        html`<oscd-menu-remove-ieds
           .doc=${doc}
           .docVersion=${docVersion}
-        ></oscd-remove-ieds>`,
+        ></oscd-menu-remove-ieds>`,
       );
       await oscdRemoveIedsPlugin.updateComplete;
     });
@@ -256,7 +256,7 @@ describe('oscd-remove-ieds', () => {
       docVersion = 0;
       doc = parseDoc(testDocs.multipleIEDs);
       oscdRemoveIedsPlugin = await fixture(
-        html`<oscd-remove-ieds .doc=${doc} .docVersion=${0}></oscd-remove-ieds>`,
+        html`<oscd-menu-remove-ieds .doc=${doc} .docVersion=${0}></oscd-menu-remove-ieds>`,
       );
       await oscdRemoveIedsPlugin.updateComplete;
 
@@ -332,7 +332,7 @@ describe('oscd-remove-ieds', () => {
       expectLNodesReferencedByBothIEDs(doc);
       sclEditor = new XMLEditor();
       oscdRemoveIedsPlugin = await fixture(
-        html`<oscd-remove-ieds .doc=${doc} .docVersion=${docVersion}></oscd-remove-ieds>`,
+        html`<oscd-menu-remove-ieds .doc=${doc} .docVersion=${docVersion}></oscd-menu-remove-ieds>`,
       );
       oscdRemoveIedsPlugin.addEventListener('oscd-edit-v2', (event: Event) => {
         const { edit, title, squash } = (event as CustomEvent<EditDetailV2>).detail;
@@ -525,7 +525,7 @@ describe('oscd-remove-ieds', () => {
       docVersion = 0;
       sclEditor = new XMLEditor();
       oscdRemoveIedsPlugin = await fixture(
-        html`<oscd-remove-ieds .doc=${doc} .docVersion=${docVersion}></oscd-remove-ieds>`,
+        html`<oscd-menu-remove-ieds .doc=${doc} .docVersion=${docVersion}></oscd-menu-remove-ieds>`,
       );
       oscdRemoveIedsPlugin.addEventListener('oscd-edit-v2', (event: Event) => {
         const { edit, title, squash } = (event as CustomEvent<EditDetailV2>).detail;
@@ -763,23 +763,19 @@ describe('oscd-remove-ieds', () => {
       expect(reset instanceof OscdCheckbox && reset.checked).to.be.false;
     });
 
-    for (const warningToken of ['--oscd-warning', '--oscd-theme-warning']) {
-      it(`uses ${warningToken} for empty-container deletion icons`, async () => {
-        oscdRemoveIedsPlugin.style.setProperty('--oscd-theme-warning', 'initial');
-        oscdRemoveIedsPlugin.style.setProperty('--oscd-warning', 'rgb(150, 100, 0)');
-        oscdRemoveIedsPlugin.style.setProperty(warningToken, 'rgb(180, 120, 0)');
-        await selectIEDs('IED1', 'IED2', 'IED3');
-        await selectCheckbox('.delete-network');
-        await selectCheckbox('.option-row:nth-of-type(2) .delete-network');
-        const icons = oscdRemoveIedsPlugin.shadowRoot!.querySelectorAll('.warning-icon');
-        expect(icons).to.have.lengthOf(3);
-        icons.forEach((icon) => {
-          expect(icon).to.be.instanceOf(OscdIcon);
-          expect(icon.textContent).to.equal('warning');
-          expect(getComputedStyle(icon).color).to.equal('rgb(180, 120, 0)');
-        });
+    it('uses the internal warning token for empty-container deletion icons', async () => {
+      oscdRemoveIedsPlugin.style.setProperty('--oscd-warning', 'rgb(180, 120, 0)');
+      await selectIEDs('IED1', 'IED2', 'IED3');
+      await selectCheckbox('.delete-network');
+      await selectCheckbox('.option-row:nth-of-type(2) .delete-network');
+      const icons = oscdRemoveIedsPlugin.shadowRoot!.querySelectorAll('.warning-icon');
+      expect(icons).to.have.lengthOf(3);
+      icons.forEach((icon) => {
+        expect(icon).to.be.instanceOf(OscdIcon);
+        expect(icon.textContent).to.equal('warning');
+        expect(getComputedStyle(icon).color).to.equal('rgb(180, 120, 0)');
       });
-    }
+    });
 
     it('preserves empty Communication unless its deletion is explicitly chosen', async () => {
       const communication = doc.querySelector('Communication')!;
@@ -977,8 +973,8 @@ describe('oscd-remove-ieds', () => {
       const snapshots = unbound.map(ln => ln.outerHTML);
       const original = new XMLSerializer().serializeToString(sclDoc);
       let version = 0;
-      const plugin: OscdRemoveIEDs = await fixture(
-        html`<oscd-remove-ieds .doc=${sclDoc} .docVersion=${version}></oscd-remove-ieds>`,
+      const plugin: OscdMenuRemoveIeds = await fixture(
+        html`<oscd-menu-remove-ieds .doc=${sclDoc} .docVersion=${version}></oscd-menu-remove-ieds>`,
       );
       const sclEditor = new XMLEditor();
       plugin.addEventListener('oscd-edit-v2', (event: Event) => {

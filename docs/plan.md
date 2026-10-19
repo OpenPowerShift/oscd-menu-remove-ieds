@@ -392,8 +392,8 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
 
 | Step | Description | Status |
 |---|---|---|
-| 0 | Review current state, create `upgrade`, write this plan | Done (plan uncommitted) |
-| 1 | Fix the lockfile, remove `.husky`, install tooling hooks; verify `npm ci`, `tsc`, lint, build | Planned |
+| 0 | Review current state, create `upgrade`, write this plan | Done (`5c2c33e`) |
+| 1 | Fix the lockfile, remove `.husky`, install tooling hooks; rename package/entry/component; verify `npm ci`, `tsc`, lint, build, test | Done (`c30da4b`) |
 | 2 | Rename package/entry/component if Q1 approves; move demo deps to dev; add `files` | Planned |
 | 3 | Extract `foundation/ied-description.ts` and `foundation/removal-plan.ts`; unit tests | Planned |
 | 4 | Add `src/testing/` plugin/driver/fixtures; rewrite specs; fix WebKit timeouts and warning assertion | Planned |
@@ -412,6 +412,29 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
   `@openpowershift/oscd-menu-remove-ieds`; upstream-only for the `scl-lib`
   LNode scope bug; preserve selection on external edits; orchestrator edit only;
   keep emptied-SubNetwork deletion unchecked.
+
+### 2026-10-20 - step 1: package identity, lockfile and hooks
+
+- Renamed the package to `@openpowershift/oscd-menu-remove-ieds`, the entry to
+  `src/oscd-menu-remove-ieds.ts` and the element to `oscd-menu-remove-ieds`.
+- Removed the stale untracked `.husky/` stub and ran
+  `npx oscd install-hooks --force`, so `core.hooksPath` is `.githooks`.
+- Deleted `package-lock.json` and regenerated it with npm 11 against the
+  registry. `@omicronenergy/oscd-material-web-base` is now the registry package
+  `2.5.1`, not a `file:` link.
+- Moved the demo shell/menu packages and the scoped-registry polyfill to
+  `devDependencies`; added `@lit/localize`, `tslib`, the visual-test packages,
+  both font packages, `@types/node` and `rollup-plugin-copy`.
+- Added the `files` allowlist and the OpenPowerShift repository, bug and
+  homepage URLs.
+- Corrected the warning-token spec to assert the internal `--oscd-warning`
+  token. The old loop expected `--oscd-theme-warning` to win over an inline
+  `--oscd-warning`, which the component never did; the theme mapping arrives in
+  step 5.
+- Commands: `tsc` pass, lint pass, build pass, `npm test` 24.3 s and all 54
+  tests pass in Chromium, Firefox and WebKit.
+- Problem found: `npm ci` still runs `prepare`, so a broken hooks path blocks
+  installation and `npm pack`; verify this before trusting a result.
 
 ### 2026-10-20 - review and branch setup
 

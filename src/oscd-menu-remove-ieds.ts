@@ -64,7 +64,7 @@ function getIedDescription(ied: Element): {
 }
 
 /** A menu plugin to remove IEDs from SCL files */
-export default class OscdRemoveIEDs extends ScopedElementsMixin(LitElement) {
+export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) {
   static scopedElements = {
     'oscd-dialog': OscdDialog,
     'oscd-divider': OscdDivider,

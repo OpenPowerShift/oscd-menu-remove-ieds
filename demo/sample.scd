@@ -36,7 +36,7 @@
     </VoltageLevel>
   </Substation>
   <Communication>
-    <Private type="oscd-remove-ieds-demo" xmlns:demo="urn:oscd-remove-ieds:demo">
+    <Private type="oscd-menu-remove-ieds-demo" xmlns:demo="urn:oscd-menu-remove-ieds:demo">
       <demo:Note>Communication-level engineering data: deleting Communication removes this too.</demo:Note>
       <demo:Layout x="120" y="80"/>
     </Private>
@@ -79,7 +79,7 @@
       <ConnectedAP iedName="SUB_B" apName="AP1"/>
     </SubNetwork>
     <SubNetwork name="DemoStationBus" type="8-MMS" desc="Emptied by selecting both DEMO_BOUND IEDs">
-      <Private type="oscd-remove-ieds-demo" xmlns:demo="urn:oscd-remove-ieds:demo">
+      <Private type="oscd-menu-remove-ieds-demo" xmlns:demo="urn:oscd-menu-remove-ieds:demo">
         <demo:Note>DemoStationBus engineering data: retain this network to preserve this note and its layout.</demo:Note>
         <demo:Layout x="240" y="160"/>
       </Private>
@@ -89,7 +89,7 @@
       <ConnectedAP iedName="DEMO_BOUND_B" apName="AP1"/>
     </SubNetwork>
     <SubNetwork name="DemoProcessBus" type="8-MMS" desc="Emptied by DEMO_BOUND_B and DEMO_UNBOUND together">
-      <Private type="oscd-remove-ieds-demo" xmlns:demo="urn:oscd-remove-ieds:demo">
+      <Private type="oscd-menu-remove-ieds-demo" xmlns:demo="urn:oscd-menu-remove-ieds:demo">
         <demo:Note>DemoProcessBus engineering data: this is separate from DemoStationBus metadata.</demo:Note>
         <demo:Layout x="480" y="160"/>
       </Private>

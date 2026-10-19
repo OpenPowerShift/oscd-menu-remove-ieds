@@ -1,40 +1,46 @@
 {
-  "name": "oscd-remove-ieds",
-  "description": "OpenSCD Menu Plugin for removing IEDs from SCL files.",
+  "name": "@openpowershift/oscd-menu-remove-ieds",
+  "description": "OpenSCD menu plugin for removing IEDs from SCL files.",
   "version": "0.0.0",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/danyill/oscd-remove-ieds.git"
+    "url": "git+https://github.com/OpenPowerShift/oscd-menu-remove-ieds.git"
   },
   "bugs": {
-    "url": "https://github.com/danyill/oscd-remove-ieds/issues"
+    "url": "https://github.com/OpenPowerShift/oscd-menu-remove-ieds/issues"
   },
-  "homepage": "https://openscd.org",
+  "homepage": "https://openpowershift.github.io/sysconex-docs/",
   "keywords": [
     "OpenSCD",
-    "iec61850",
-    "GOOSE",
-    "SMV",
-    "SampledValues",
-    "subscriber",
-    "data-binding"
+    "IEC 61850",
+    "SCL",
+    "IED",
+    "menu"
   ],
   "author": "Daniel Mulholland",
-  "main": "dist/oscd-remove-ieds.js",
   "license": "Apache-2.0",
-  "module": "dist/oscd-remove-ieds.js",
+  "main": "dist/oscd-menu-remove-ieds.js",
+  "module": "dist/oscd-menu-remove-ieds.js",
+  "types": "dist/oscd-menu-remove-ieds.d.ts",
   "exports": {
-    ".": "./dist/oscd-remove-ieds.js"
+    ".": "./dist/oscd-menu-remove-ieds.js"
   },
+  "files": [
+    "dist",
+    "!dist/**/*.spec.*",
+    "!dist/**/*.test.*",
+    "!dist/testing",
+    "!dist/demo"
+  ],
   "scripts": {
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "lint": "oscd lint",
     "format": "oscd lint --format",
     "start": "oscd start",
     "start:bundle": "oscd start-bundle",
-    "build": "oscd build",
-    "bundle": "oscd bundle",
-    "doc": "typedoc src/oscd-remove-ieds.ts --out dist/doc",
+    "build": "npm run clean && oscd build --no-clean",
+    "bundle": "npm run clean && oscd bundle --no-clean",
     "test": "oscd test",
     "test:watch": "oscd test --watch",
     "test:visual": "oscd test --visual",
@@ -44,21 +50,28 @@
     "prepare": "oscd install-hooks"
   },
   "dependencies": {
-    "@omicronenergy/oscd-menu-open": "^0.0.6",
-    "@omicronenergy/oscd-menu-save": "^0.0.2",
-    "@omicronenergy/oscd-shell": "^0.0.18",
+    "@lit/localize": "^0.12.2",
     "@omicronenergy/oscd-ui": "^0.1.2",
     "@open-wc/scoped-elements": "^3.0.10",
     "@openscd/oscd-api": "^0.1.6",
     "@openscd/scl-lib": "^2.0.1",
-    "@webcomponents/scoped-custom-element-registry": "^0.0.10",
-    "lit": "^3.3.3"
+    "lit": "^3.3.3",
+    "tslib": "^2.8.1"
   },
   "devDependencies": {
+    "@fontsource/material-symbols-outlined": "^5.3.9",
+    "@fontsource/roboto": "^5.3.0",
+    "@omicronenergy/oscd-menu-open": "^0.0.6",
+    "@omicronenergy/oscd-menu-save": "^0.0.2",
+    "@omicronenergy/oscd-shell": "^0.0.18",
     "@omicronenergy/oscd-tooling": "^0.0.8",
     "@open-wc/testing": "^4.0.0",
     "@openscd/oscd-editor": "^1.8.0",
-    "@web/test-runner-playwright": "0.11.1",
-    "typedoc": "^0.28.20"
+    "@types/node": "^20.19.43",
+    "@web/test-runner-commands": "^0.9.0",
+    "@web/test-runner-playwright": "^0.11.1",
+    "@web/test-runner-visual-regression": "^0.10.0",
+    "@webcomponents/scoped-custom-element-registry": "^0.0.10",
+    "rollup-plugin-copy": "^3.5.0"
   }
 }

@@ -1,7 +1,7 @@
 import OscdMenuOpen from '@omicronenergy/oscd-menu-open';
 import OscdMenuSave from '@omicronenergy/oscd-menu-save';
 
-import OscdRemoveIEDs from '../dist/oscd-remove-ieds.js';
+import OscdMenuRemoveIeds from '../dist/oscd-menu-remove-ieds.js';
 
 const oscdShell = document.querySelector('oscd-shell');
 const registry = oscdShell?.registry;
@@ -10,7 +10,7 @@ if (!registry) {
 }
 registry.define('oscd-menu-open', OscdMenuOpen);
 registry.define('oscd-menu-save', OscdMenuSave);
-registry.define('oscd-remove-ieds', OscdRemoveIEDs);
+registry.define('oscd-menu-remove-ieds', OscdMenuRemoveIeds);
 
 export const plugins = {
   menu: [
@@ -41,7 +41,7 @@ export const plugins = {
       icon: 'delete',
       active: true,
       requireDoc: true,
-      tagName: 'oscd-remove-ieds',
+      tagName: 'oscd-menu-remove-ieds',
     },
   ],
   editor: [
