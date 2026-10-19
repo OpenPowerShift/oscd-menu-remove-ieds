@@ -533,6 +533,14 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
   consecutive visual runs pass 12/12 with no diff.
 - The existing CI baselines were captured before the fix, so they must be
   regenerated once with the `update-visual-baselines` label.
+- CI regenerated all 12 baselines at `05abda3`. The review images are now fully
+  opaque.
+- Local runs against the CI baselines still differ by 3 to 5 % inside the ACE
+  preview, because Ace uses the system `monospace` font and the local and CI
+  systems provide different monospace faces. The tolerance does not cover a
+  different font. This is a local-only difference; the CI baseline was made on
+  the CI image and CI renders it with the same font. If local parity is wanted,
+  bundle Roboto Mono and set `--oscd-ace-editor-font-family`.
 - `tsc` pass, lint pass, `npm test` 27 s and 62 tests pass. Coverage 97.69 %.
 
 ### 2026-10-20 - follow-up: stable dialog size
