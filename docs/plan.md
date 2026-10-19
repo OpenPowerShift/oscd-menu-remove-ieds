@@ -516,6 +516,21 @@ Antora component name `oscd-menu-remove-ieds` (matching the package/repo; Q1).
   Do not let the orchestrator build this branch before the baseline workflow
   runs.
 
+### 2026-10-20 - follow-up: stable dialog size
+
+- Removed the `with-options` size switch. The dialog is now 1080 px wide (94 vw
+  on narrow screens) and the form keeps a fixed 600 px height from the moment
+  it opens.
+- The right-hand options column is always present. With no options it shows a
+  hint: *Select IEDs to see removal options* or *No additional removal options
+  for this selection*.
+- The IED list therefore keeps its width when options appear or disappear.
+- Focus now moves to the search field when the dialog opens, instead of the
+  first header button.
+- Added a test which compares the form width and height before selecting,
+  after selecting, and after deselecting an IED.
+- `tsc` pass, lint pass, `npm test` 25.5 s and 62 tests pass. Coverage 97.69 %.
+
 ### 2026-10-20 - follow-up: options to the right and filtered bulk selection
 
 - Moved the removal options from a row below the list to a right-hand column.

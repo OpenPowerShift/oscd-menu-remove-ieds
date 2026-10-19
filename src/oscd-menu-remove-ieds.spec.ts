@@ -211,6 +211,31 @@ describe('oscd-menu-remove-ieds', () => {
       }
     });
 
+    it('keeps its size when options appear and disappear', async () => {
+      const original = {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
+      try {
+        await setViewport({ width: 1280, height: 800 });
+        await mount('duplicate-lnodes.scd');
+        await driver.open();
+        const before = driver.layout();
+
+        await driver.select('IED1');
+        const withOptions = driver.layout();
+        expect(withOptions.formWidth).to.equal(before.formWidth);
+        expect(withOptions.formHeight).to.equal(before.formHeight);
+
+        await driver.deselect('IED1');
+        const after = driver.layout();
+        expect(after.formWidth).to.equal(before.formWidth);
+        expect(after.formHeight).to.equal(before.formHeight);
+      } finally {
+        await setViewport(original);
+      }
+    });
+
     it('stacks the options below the list on a narrow screen', async () => {
       const original = {
         width: window.innerWidth,

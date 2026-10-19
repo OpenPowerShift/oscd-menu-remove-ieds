@@ -1,7 +1,9 @@
 = Removal options
 include::partial$base.adoc[]
 
-The *Removal options* panel appears when the selection has an effect on LNodes or on the communication sections.
+The removal options are on the right side of the dialog.
+The dialog keeps its size when you add or remove IEDs from the selection.
+When the selection has no effect on LNodes or on the communication sections, the panel shows a hint.
 
 .The options for two IEDs which empty one SubNetwork
 image::subnetwork-options.png[The removal options panel with the LNode checkbox and the option to delete the emptied SubNetwork.]

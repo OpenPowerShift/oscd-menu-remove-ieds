@@ -31,8 +31,9 @@ For more information, refer to xref:searching.adoc#select-shown[].
 
 == Removal options
 
-The *Removal options* panel appears when the selection has an effect on LNodes or on the communication sections.
-The panel stays closed when there is nothing to choose.
+The right side of the dialog shows the removal options.
+When the selection has no effect on LNodes or on the communication sections, the panel shows a short hint.
+The dialog keeps its size when the options change.
 
 .The dialog with no additional options
 image::no-additional-options.png[The dialog with one IED selected and no removal options panel.]

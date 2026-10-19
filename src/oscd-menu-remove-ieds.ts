@@ -210,6 +210,15 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
     }
   }
 
+  private handleDialogOpened(): void {
+    const field = this.selectionList?.shadowRoot?.querySelector(
+      'oscd-outlined-text-field',
+    );
+    if (field instanceof HTMLElement) {
+      field.focus();
+    }
+  }
+
   private handleDialogClosed(): void {
     this.clearSelection();
   }
@@ -382,8 +391,17 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
   }
 
   private renderRemovalOptions() {
+    const emptyMessage =
+      this.items.length === 0
+        ? msg('No IEDs to remove.')
+        : !this.hasSelection
+          ? msg('Select IEDs to see removal options.')
+          : msg('No additional removal options for this selection.');
     return html`
       <h3>${msg('Removal options')}</h3>
+      ${!this.hasRemovalOptions
+        ? html`<p class="options-empty">${emptyMessage}</p>`
+        : nothing}
       ${this.hasBoundLNodes
         ? html`
             <label class="option">
@@ -524,16 +542,11 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
   render() {
     return html`<oscd-dialog
         id="selection-dialog"
-        class=${this.hasRemovalOptions ? 'with-options' : ''}
+        @opened=${this.handleDialogOpened}
         @closed=${this.handleDialogClosed}
       >
         <div slot="headline">${msg('Remove IEDs')}</div>
-        <form
-          slot="content"
-          id="selection"
-          method="dialog"
-          class=${this.hasRemovalOptions ? 'with-options' : ''}
-        >
+        <form slot="content" id="selection" method="dialog">
           <p class="intro">
             ${msg(
               'Select the IEDs to remove from this SCL document. By default, associated LNodes are preserved with iedName="None", merging duplicates.',
@@ -579,16 +592,12 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
                   ></oscd-selection-list>
                 `}
           </div>
-          ${this.hasRemovalOptions
-            ? html`
-                <aside
-                  class="removal-options"
-                  aria-label=${msg('Additional removal options')}
-                >
-                  ${this.renderRemovalOptions()}
-                </aside>
-              `
-            : nothing}
+          <aside
+            class="removal-options"
+            aria-label=${msg('Additional removal options')}
+          >
+            ${this.renderRemovalOptions()}
+          </aside>
         </form>
         <div slot="actions">
           <oscd-text-button
@@ -650,25 +659,18 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
       }
 
       #selection-dialog {
-        max-height: 90dvh;
-      }
-
-      #selection-dialog.with-options {
         width: min(1080px, 94vw);
         max-width: 94vw;
+        max-height: 90dvh;
       }
 
       form {
         display: grid;
-        grid-template-columns: minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
         grid-template-rows: auto minmax(0, 1fr);
         height: min(600px, 70dvh);
         padding: 0;
         margin-block-end: 0;
-      }
-
-      form.with-options {
-        grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
       }
 
       form .intro {
@@ -739,6 +741,10 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
         padding-inline: 12px;
       }
 
+      .options-empty {
+        margin: 0 16px;
+      }
+
       h3 {
         display: flex;
         align-items: center;
@@ -793,7 +799,7 @@ export default class OscdMenuRemoveIeds extends ScopedElementsMixin(LitElement) 
       }
 
       @media (max-width: 720px) {
-        form.with-options {
+        form {
           grid-template-columns: minmax(0, 1fr);
           grid-template-rows: auto minmax(0, 1fr) auto;
         }
