@@ -11,7 +11,12 @@ export default [
     ...pluginBundle,
     plugins: [
       ...pluginBundle.plugins,
-      copy({ targets: [{ src: 'demo/index.deploy.html', dest: 'dist' }] }),
+      // GitHub Pages serves dist/ as the site root and needs index.html there.
+      copy({
+        targets: [
+          { src: 'demo/index.deploy.html', dest: 'dist', rename: 'index.html' },
+        ],
+      }),
     ],
   },
   demoBundle,
