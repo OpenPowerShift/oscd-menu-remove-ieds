@@ -16,7 +16,8 @@
 :uri-node: https://nodejs.org/
 
 // badges
-image:https://github.com/OpenPowerShift/oscd-menu-remove-ieds/actions/workflows/test.yml/badge.svg[title='Build Status']
+image:https://github.com/OpenPowerShift/oscd-menu-remove-ieds/actions/workflows/release.yml/badge.svg[link=https://github.com/OpenPowerShift/oscd-menu-remove-ieds/actions/workflows/release.yml,title='Release and deploy status']
+image:https://img.shields.io/npm/v/@openpowershift/oscd-menu-remove-ieds[link={uri-npm},title='npm version']
 image:https://img.shields.io/badge/LF%20Energy%20Slack-%20%23OpenSCD%20chat-purple?logo=slack&color=2aa198&labelColor=6c71c4[link={uri-chat},title='OpenSCD chat']
 
 toc::[]
