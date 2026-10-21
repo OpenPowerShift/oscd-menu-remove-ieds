@@ -1,0 +1,76 @@
+import { LitElement, type PropertyValues } from 'lit';
+import { OscdAceEditor } from '@omicronenergy/oscd-ui/ace-editor/OscdAceEditor.js';
+import { OscdCheckbox } from '@omicronenergy/oscd-ui/checkbox/OscdCheckbox.js';
+import { OscdDialog } from '@omicronenergy/oscd-ui/dialog/OscdDialog.js';
+import { OscdDivider } from '@omicronenergy/oscd-ui/divider/OscdDivider.js';
+import { OscdFilledButton } from '@omicronenergy/oscd-ui/button/OscdFilledButton.js';
+import { OscdIcon } from '@omicronenergy/oscd-ui/icon/OscdIcon.js';
+import { OscdSelectionList, type SelectItem } from '@omicronenergy/oscd-ui/selection-list/OscdSelectionList.js';
+import { OscdTextButton } from '@omicronenergy/oscd-ui/button/OscdTextButton.js';
+import OscdRemovalConfirmation from './oscd-removal-confirmation.js';
+declare const OscdMenuRemoveIeds_base: typeof LitElement & import("@open-wc/dedupe-mixin").Constructor<import("@open-wc/scoped-elements/types.js").ScopedElementsHost> & import("@open-wc/scoped-elements/types.js").ScopedElementsHostConstructor;
+/** A menu plugin to remove IEDs from SCL files. */
+export default class OscdMenuRemoveIeds extends OscdMenuRemoveIeds_base {
+    static scopedElements: {
+        'oscd-ace-editor': typeof OscdAceEditor;
+        'oscd-checkbox': typeof OscdCheckbox;
+        'oscd-dialog': typeof OscdDialog;
+        'oscd-divider': typeof OscdDivider;
+        'oscd-filled-button': typeof OscdFilledButton;
+        'oscd-icon': typeof OscdIcon;
+        'oscd-removal-confirmation': typeof OscdRemovalConfirmation;
+        'oscd-selection-list': typeof OscdSelectionList;
+        'oscd-text-button': typeof OscdTextButton;
+    };
+    /** The document being edited as provided to plugins by the host. */
+    doc: XMLDocument;
+    /** SCL change indicator. */
+    docVersion?: unknown;
+    items: SelectItem[];
+    private hasSelection;
+    private hasBoundLNodes;
+    private preserveLNodes;
+    private affectedSubNetworks;
+    private deletedSubNetworks;
+    private affectedCommunication;
+    private deleteCommunication;
+    private reviewElement;
+    private confirmationSummary;
+    dialogUI: OscdDialog;
+    selectionList: OscdSelectionList | null;
+    private lNodeCheckbox;
+    private reviewDialog;
+    private confirmationDialog;
+    private boundIedNames;
+    willUpdate(changedProperties: PropertyValues): void;
+    private handleSelectionChange;
+    private handleSelectAllShown;
+    private handleClearSelection;
+    private itemNames;
+    private setSelectedNames;
+    private handleRemoveLNodesChange;
+    private handleDeleteSubNetworkChange;
+    private handleDeleteCommunicationChange;
+    private handleDialogOpened;
+    private handleDialogClosed;
+    private configureAceEditor;
+    private handleReviewSCL;
+    private handleRemove;
+    private handleConfirmRemoval;
+    private get emptiesCommunication();
+    private selectedIedNames;
+    private refreshItems;
+    private applySelection;
+    private resetSelectionState;
+    private get hasRemovalOptions();
+    private resetRemovalChecks;
+    private clearSelection;
+    run(): Promise<void>;
+    removeIEDs(): Promise<void>;
+    private renderRemovalOptions;
+    private renderConfirmation;
+    private renderReview;
+    render(): import("lit-html").TemplateResult<1>;
+    static styles: import("lit").CSSResult[];
+}
+export {};
