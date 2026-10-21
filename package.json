@@ -20,6 +20,9 @@
   ],
   "author": "Daniel Mulholland",
   "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "dist/oscd-menu-remove-ieds.js",
   "module": "dist/oscd-menu-remove-ieds.js",
   "types": "dist/oscd-menu-remove-ieds.d.ts",
