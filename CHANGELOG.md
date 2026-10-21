@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.2](https://github.com/OpenPowerShift/oscd-menu-remove-ieds/compare/v0.8.1...v0.8.2) (2026-10-21)
+
+
+### Bug Fixes
+
+* serve the landing page at the site root ([490bbaf](https://github.com/OpenPowerShift/oscd-menu-remove-ieds/commit/490bbaf1462c277927daff148500cf6a0e580e4a))
+
 ## [0.8.1](https://github.com/OpenPowerShift/oscd-menu-remove-ieds/compare/v0.8.0...v0.8.1) (2026-10-21)
 
 
